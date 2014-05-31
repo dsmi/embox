@@ -1,0 +1,5 @@
+MoM solver for shielded electromagnetic structures
+==================================================
+
+The solver implements full-wave electromagnetic analysis of shielded (enclosed by conducting box/tube) structures. The conductor is meshed and the cell-to-cell interaction (field at one cell due to current in another) is evaluated by expansion in terms of waveguide modes - which allow calculation of the interaction term with full numerical precision. The waveguide modes summation is accelerated by means of FFT.
+Please refer to embos/examples and embox/tests.
