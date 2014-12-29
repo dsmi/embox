@@ -2,6 +2,7 @@ function suite_solver
 % suite_solve : solver algorithms testsuite.
 %
 
+addTest('test_ports2subs');
 addTest('test_wnorm');
 addTest('test_gtri');
 addTest('test_gflat');
