@@ -11,5 +11,6 @@ addTest('test_calczmn2');
 addTest('test_myfft');
 addTest('test_wrapidx');
 addTest('test_mkzmat');
+addTest('test_mkzsmat');
 addTest('test_tline');
 addTest('test_tlinexy');
