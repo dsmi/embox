@@ -3,7 +3,7 @@ function [ ne, nm ] = wnorm(a, b, maxm, maxn)
 %
 % Retruns the normalization coefficients for the modes of the rectangular
 % waveguide. The modes are normalized such that integral of magnitude of
-% the mode vector over the guide crossection is unity.
+% the mode vector dotted with itself over the guide crossection is unity.
 %  Params:
 %    a, b       - dimensions of the waveguide
 %    maxm, maxn - upper limits of the mode indices
