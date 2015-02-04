@@ -22,8 +22,7 @@ freq=wg.freq;
 
 a=wg.a; % x-size of the waveguide
 b=wg.b; % y-size of the waveguide
-h=wg.h; % height of the metallization above ground
-c=wg.c; % upper ground height
+h=wg.h; % thickness of the layers
 
 % Layers stackup, from bottom to top along z
 weps = wg.weps;
@@ -70,13 +69,13 @@ Y0m=(j*freq*repmat(shiftdim(weps(:), -2), maxm, maxn))./gamma;
 
 % left-looking reflection coefficient at z=0
 Gls0=wg.Gls0;
-% left-looking reflection coefficient at z=h
-Gls=Gls0*exp(-2*gamma(:,:,1)*h);
+% left-looking reflection coefficient at z=h(1)
+Gls=Gls0*exp(-2*gamma(:,:,1)*h(1));
 
-% right-looking reflection coefficient at z=c
-Ggr0=wg.Ggr0; % metal at top
-% right-looking reflection coefficient at z=h
-Ggr=Ggr0*exp(2*gamma(:,:,2)*(h-c));
+% right-looking reflection coefficient at the top z=sum(h)
+Ggr0=wg.Ggr0;
+% right-looking reflection coefficient at z=h(1)
+Ggr=Ggr0*exp(2*gamma(:,:,2)*(-h(2)));
 
 % TE and TM admittances at z->h+
 Ye_gr=(1-Ggr)./(1+Ggr).*Y0e(:,:,2);

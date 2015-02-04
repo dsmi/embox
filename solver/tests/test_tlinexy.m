@@ -16,7 +16,7 @@ w=b/ny*4; % stripline width
 
 
 % parametes of the enclosure to pass to mkzmat
-wg=wgparams(freq,a,b,h,c,nx,ny);
+wg=wgparams(freq,a,b,[h,c-h],nx,ny);
 
 % Mesh cell size
 dx = wg.a/nx;

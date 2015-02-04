@@ -16,7 +16,7 @@ nx=3;   % cells along x
 ny=4;   % cells along y
 
 % parametes of the enclosure to pass to calczmn
-wg=wgparams(freq,a,b,h,c,nx,ny);
+wg=wgparams(freq,a,b,[h,c-h],nx,ny);
 
 [ xi, xj ] = ndgrid(0:nx, 0:(ny-1));
 xi = xi(:);

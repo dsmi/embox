@@ -6,7 +6,7 @@ addpath(genpath([ pwd, '/..' ]));
 function Y=simline(freq, nx, ny, a, b, h, c, w)
 
     % parametes of the enclosure to pass to mkzmat
-    wg=wgparams(freq,a,b,h,c,nx,ny);
+    wg=wgparams(freq,a,b,[h,c-h],nx,ny);
 
     % x-directed trace
     B=zeros(nx+2,ny+2);

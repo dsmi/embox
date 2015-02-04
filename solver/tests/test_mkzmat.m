@@ -16,7 +16,7 @@ nx=4;  % cells along x
 ny=4;  % cells along y
 
 % parametes of the enclosure
-wg=wgparams(freq,a,b,h,c,nx,ny);
+wg=wgparams(freq,a,b,[h,c-h],nx,ny);
 wg.cnx=4;
 wg.cny=4;
 

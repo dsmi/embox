@@ -21,7 +21,7 @@ nx=8;  % cells along x
 ny=8;  % cells along y
 
 % parametes of the enclosure to pass to calczmn
-wg=wgparams(freq,a,b,h,c,nx,ny);
+wg=wgparams(freq,a,b,[h,c-h],nx,ny);
 
 % to improve the accuracy
 wg.cnx=32;
