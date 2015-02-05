@@ -4,4 +4,5 @@ function suite_all
 
 addTestSuite('suite_common');
 addTestSuite('suite_mesh');
+addTestSuite('suite_tlines');
 addTestSuite('suite_solver');

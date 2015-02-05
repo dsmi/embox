@@ -26,13 +26,13 @@ end
 % angular frequency
 freq=5.0e11;
 
-nx=64;  % cells along x
-ny=64;  % cells along y
+nx=32;  % cells along x
+ny=32;  % cells along y
 a=1e-2; % x-size of the waveguide
 b=1e-2; % y-size of the waveguide
 h=5e-4; % height of the metallization above ground
 c=1e-3; % height of the upper ground
-w=b/ny*8; % stripline width
+w=b/ny*4; % stripline width
 
 Y1=simline(freq, nx, ny, a, b, h, c, w);
 Y2=simline(freq, nx*2, ny, a*2, b, h, c, w);

@@ -58,6 +58,9 @@ kz(find(real(k2)<kc2))=kz2(find(real(k2)<kc2));
 % waveguide layers/sections propagation constants
 gamma=j*kz;
 
+% clean up memory
+clear kc k2 kc2 kz kz2
+
 % Characteristic admittances of the TE modes
 Y0e=gamma./(j*freq*repmat(shiftdim(wmu(:), -2), maxm, maxn));
 
@@ -67,23 +70,18 @@ Y0m=(j*freq*repmat(shiftdim(weps(:), -2), maxm, maxn))./gamma;
 % normalization coefficients for te and tm waveguide modes
 [ Ne, Nm ] = wnorm(a, b, maxm, maxn);
 
-% left-looking reflection coefficient at z=0
-Gls0=wg.Gls0;
-% left-looking reflection coefficient at z=h(1)
-Gls=Gls0*exp(-2*gamma(:,:,1)*h(1));
+% Prepare inputs for the tlines calculators - one for te and one for
+% tm modes. The reshaping is needed because the calculator only allows
+% one dimension for the tline parameters.
+z=cumsum(h); % layers/tlines endpoints coordinates
+z=repmat(shiftdim([ 0 ; z(:) ], -2), maxm, maxn);
+ztlc = reshape(z, [], nl+1);
+ktlc = reshape(gamma, [], nl);
+tle=calc_tlines(ztlc, reshape(1./Y0e, [], nl), ktlc, wg.Gls0, wg.Ggr0);
+tlm=calc_tlines(ztlc, reshape(1./Y0m, [], nl), ktlc, wg.Gls0, wg.Ggr0);
 
-% right-looking reflection coefficient at the top z=sum(h)
-Ggr0=wg.Ggr0;
-% right-looking reflection coefficient at z=h(1)
-Ggr=Ggr0*exp(2*gamma(:,:,2)*(-h(2)));
-
-% TE and TM admittances at z->h+
-Ye_gr=(1-Ggr)./(1+Ggr).*Y0e(:,:,2);
-Ym_gr=(1-Ggr)./(1+Ggr).*Y0m(:,:,2);
-
-% TE and TM admittances at z->h-
-Ye_ls=-(1-Gls)./(1+Gls).*Y0e(:,:,1);
-Ym_ls=-(1-Gls)./(1+Gls).*Y0m(:,:,1);
+% clean up memory
+clear Y0e Y0m gamma z ztlc ktlc
 
 % mesh cell sizes
 dx=wg.a/wg.nx;
@@ -101,9 +99,11 @@ Gdy_tri=gtri(dy,ky);
 % Multiplier resulting from y-integration of the constant (rectangular) b.f.
 Gdy_flat=gflat(dy,ky);
 
-% Admittance to be used when finding the mode voltages
-Ye=Ye_gr-Ye_ls;
-Ym=Ym_gr-Ym_ls;
+% Call tlines calculator to obtain admittances to be used when finding
+% the mode voltages - this is the admittance of the tline at z where
+% the metallization is located.
+Ye = 1./reshape(calc_vi(tle, h(1), 1, h(1), 1), maxm, maxn);
+Ym = 1./reshape(calc_vi(tlm, h(1), 1, h(1), 1), maxm, maxn);
 
 % x-directed testing, x-directed source
 Gxx=Gdx_tri.*Gdx_tri.*Gdy_flat.*Gdy_flat.*(-Ne.*Ne.*ky.*ky./Ye-Nm.*Nm.*kx.*kx./Ym);
