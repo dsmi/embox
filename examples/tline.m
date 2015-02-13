@@ -11,9 +11,7 @@ function Y=simline(freq, nx, ny, a, b, h, c, w)
     % x-directed trace
     B=zeros(nx+2,ny+2);
     B=linefromto(B, -1.0, 0.5, 2.0, 0.5, w/a);
-    layer=mklayer(B);
-    layer.pos = 1;
-    mesh.layers(1) = layer;
+    mesh=mkmesh(mklayer(B), 1);
 
     % Identify ports
     b1 = findbases(mesh, nx, ny, 0, 0, 0, 1);
