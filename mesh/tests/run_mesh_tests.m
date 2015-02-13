@@ -1,3 +1,3 @@
 % Mesher tests only
 addpath(genpath([ pwd, '/../..' ]));
-runTestSuite('suite_m™NÒ)DÛâX
+runTestSuite('suite_mesh');

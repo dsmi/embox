@@ -25,7 +25,10 @@ xj=[ 2 3 2 ];
 yi=[ 3 1 3 2 ];
 yj=[ 4 3 2 1 ];
 
-mesh=struct('xi', xi, 'xj', xj, 'yi', yi, 'yj', yj);
+layer=struct('xi', xi, 'xj', xj, 'yi', yi, 'yj', yj);
+layer.pos = 1; % position in the stackup
+
+mesh.layers(1) = layer;
 
 Zt=mkzmat2(wg, mesh);
 Z=mkzmat(wg, mesh);

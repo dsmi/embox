@@ -25,7 +25,10 @@ dy = wg.b/ny;
 % x-directed trace
 B=zeros(nx+2,ny+2);
 B=linefromto(B, -1.0, 0.5, 2.0, 0.5, w/a);
-mesh=mkmesh(B);
+layer=mklayer(B);
+layer.pos = 1;
+
+mesh.layers(1) = layer;
 
 % Identify ports
 b1 = findbases(mesh, nx, ny, 0, 0, 0, 1);
@@ -36,7 +39,10 @@ Y1=solvey(wg, mesh, { b1' b2' }, { b1'*0-dy b2'*0+dy });
 % y-directed trace
 B=zeros(nx+2,ny+2);
 B=linefromto(B, 0.5, -1.0, 0.5, 2.0, w/b);
-mesh=mkmesh(B);
+layer=mklayer(B);
+layer.pos = 1;
+
+mesh.layers(1) = layer;
 
 % Identify ports
 b1 = findbases(mesh, nx, ny, 0, 0, 1, 0);

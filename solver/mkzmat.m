@@ -6,12 +6,6 @@ function Z=mkzmat(wg, mesh)
 % mesh   - meshed metal, see mkmesh
 % 
  
-nx=length(mesh.xi);
-ny=length(mesh.yi);
-n=nx+ny;
-
-Z=zeros(n,n);
-
 % Upper limits of the waveguide mode orders to be used when evaluating
 % the matrix elements: T(E/M)[0..M-1][0..N-1] modes are used. 
 maxm=wg.nx*wg.cnx;
@@ -70,18 +64,19 @@ Y0m=(j*freq*repmat(shiftdim(weps(:), -2), maxm, maxn))./gamma;
 % normalization coefficients for te and tm waveguide modes
 [ Ne, Nm ] = wnorm(a, b, maxm, maxn);
 
+% layers/tlines endpoints coordinates
+z=cumsum(h); 
+
 % Prepare inputs for the tlines calculators - one for te and one for
 % tm modes. The reshaping is needed because the calculator only allows
 % one dimension for the tline parameters.
-z=cumsum(h); % layers/tlines endpoints coordinates
-z=repmat(shiftdim([ 0 ; z(:) ], -2), maxm, maxn);
-ztlc = reshape(z, [], nl+1);
+ztlc = reshape(repmat(shiftdim([ 0 ; z(:) ], -2), maxm, maxn), [], nl+1);
 ktlc = reshape(gamma, [], nl);
 tle=calc_tlines(ztlc, reshape(1./Y0e, [], nl), ktlc, wg.Gls0, wg.Ggr0);
 tlm=calc_tlines(ztlc, reshape(1./Y0m, [], nl), ktlc, wg.Gls0, wg.Ggr0);
 
 % clean up memory
-clear Y0e Y0m gamma z ztlc ktlc
+clear Y0e Y0m gamma ztlc ktlc
 
 % mesh cell sizes
 dx=wg.a/wg.nx;
@@ -99,118 +94,167 @@ Gdy_tri=gtri(dy,ky);
 % Multiplier resulting from y-integration of the constant (rectangular) b.f.
 Gdy_flat=gflat(dy,ky);
 
-% Call tlines calculator to obtain admittances to be used when finding
-% the mode voltages - this is the admittance of the tline at z where
-% the metallization is located.
-Ye = 1./reshape(calc_vi(tle, h(1), 1, h(1), 1), maxm, maxn);
-Ym = 1./reshape(calc_vi(tlm, h(1), 1, h(1), 1), maxm, maxn);
+% We want to pre-allocate the Z matrix, for that we need to know its size.
+% To calculate the size we need to count the basis functions on all layers.
+numx = sum(cellfun(@(v) length(v), { mesh.layers(:).xi }));
+numy = sum(cellfun(@(v) length(v), { mesh.layers(:).yi }));
+numbf = numx + numy;
 
-% x-directed testing, x-directed source
-Gxx=Gdx_tri.*Gdx_tri.*Gdy_flat.*Gdy_flat.*(-Ne.*Ne.*ky.*ky./Ye-Nm.*Nm.*kx.*kx./Ym);
+% We also compute the cumulative sums of numbers of the basis functions in
+% the layers up to the given one which is then used to place the blocks
+% of the matrix (see below)
+cumx = cumsum(cellfun(@(v) length(v), { mesh.layers(:).xi }));
+cumy = cumsum(cellfun(@(v) length(v), { mesh.layers(:).yi }));
+cumbf = [ 0 (cumx + cumy) ];
 
-[ cc, ss ] = myfft(Gxx);
+% Pre-allocate it!
+Z = zeros(numbf); % can do complex(zeros(numbf)), but does it make sense?
 
-[ mxi, nxi ] = ndgrid(mesh.xi, mesh.xi);
-[ mxj, nxj ] = ndgrid(mesh.xj, mesh.xj);
+% Here we start popolating the impedance matrix. The geometry consists of a
+% number of layers of metallization (vias are on their way) and the Z matrix
+% consists of N-by-N blocks where N is the number of layers. The block M(m,n)
+% corresponds to the m-th observation and n-th source layer.
+for mli = 1:length(mesh.layers)
 
-idif = wrapidx((mxi-nxi)*wg.cnx/2+1, size(Gxx, 1));   % xt-xs
-isum = wrapidx((mxi+nxi)*wg.cnx/2+1, size(Gxx, 1));   % xt+xs
-jdif = wrapidx((mxj-nxj)*wg.cny/2+1, size(Gxx, 2));   % yt-ys
-jsum = wrapidx((mxj+nxj+1)*wg.cny/2+1, size(Gxx, 2)); % yt+ys
-% notice one is added to mxj+nxj when computing jsum - y-center of
-% the x-directed basis is found as j*dy+dy/2, (j is the mesh index)
-% the two halves added together give one
+    mlay = mesh.layers(mli);
 
-idif_jdif = sub2ind(size(cc), idif, jdif);
-idif_jsum = sub2ind(size(cc), idif, jsum);
-isum_jdif = sub2ind(size(cc), isum, jdif);
-isum_jsum = sub2ind(size(cc), isum, jsum);
+    % Position of the m-th layer in the stackup
+    mpos = mlay.pos;
 
-Zxx = (cc(idif_jdif) - cc(idif_jsum) + cc(isum_jdif) - cc(isum_jsum)) ./ 4;
+    for nli = 1:length(mesh.layers)
 
-% y-directed testing, x-directed source
-Gyx=Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_tri.*(Ne.*ky.*Ne.*kx./Ye-Nm.*kx.*Nm.*ky./Ym);
+	nlay = mesh.layers(nli);
 
-[ cc, ss ] = myfft(Gyx);
+	% Position of the n-th layer in the stackup
+	npos = nlay.pos;
 
-[ myi, nxi ] = ndgrid(mesh.yi, mesh.xi);
-[ myj, nxj ] = ndgrid(mesh.yj, mesh.xj);
+	% The waveguide modes are described in terms of equivalent transmission
+	% lines, and here we compute the mutual impedance (or just the impedance
+	% if source and observation layers coincide) which if multiplied by
+	% the current source at the source layer position gives the voltage at
+	% the observation layer. We call the tlines calculator (which we set up
+	% earlier) to obtain the impedance.
+	Ze = reshape(calc_vi(tle, z(mpos), mpos, z(npos), npos), maxm, maxn);
+	Zm = reshape(calc_vi(tlm, z(mpos), mpos, z(npos), npos), maxm, maxn);
 
-% y-position of x-directed bases (and x-position of y-directed) is the
-% bottom/left edge (one with minimal x/y) - that is the reason for adding
-% or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to half-cell)
-% Here for Zyx:
-%  xt=myi*dx+dx/2 (y-directed testing)
-%  ys=nxj*dy+dy/2 (x-directed source)
-idif = wrapidx((myi-nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt-xs
-isum = wrapidx((myi+nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt+xs
-jdif = wrapidx((myj-nxj)*wg.cny/2 - wg.cny/4 + 1, size(Gyx, 2)); % yt-ys
-jsum = wrapidx((myj+nxj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt+ys
+	% x-directed testing, x-directed source
+	Gxx=Gdx_tri.*Gdx_tri.*Gdy_flat.*Gdy_flat.*(-Ne.*Ne.*ky.*ky.*Ze-Nm.*Nm.*kx.*kx.*Zm);
 
-idif_jdif = sub2ind(size(ss), idif, jdif);
-idif_jsum = sub2ind(size(ss), idif, jsum);
-isum_jdif = sub2ind(size(ss), isum, jdif);
-isum_jsum = sub2ind(size(ss), isum, jsum);
+	[ cc, ss ] = myfft(Gxx);
 
-Zyx = (ss(isum_jsum) - ss(isum_jdif) + ss(idif_jsum) - ss(idif_jdif)) ./ 4;
+	[ mxi, nxi ] = ndgrid(mlay.xi, nlay.xi);
+	[ mxj, nxj ] = ndgrid(mlay.xj, nlay.xj);
 
-% x-directed testing, y-directed source
-Gxy=Gdx_flat.*Gdy_tri.*Gdx_tri.*Gdy_flat.*(Ne.*kx.*Ne.*ky./Ye-Nm.*ky.*Nm.*kx./Ym);
+	idif = wrapidx((mxi-nxi)*wg.cnx/2+1, size(Gxx, 1));   % xt-xs
+	isum = wrapidx((mxi+nxi)*wg.cnx/2+1, size(Gxx, 1));   % xt+xs
+	jdif = wrapidx((mxj-nxj)*wg.cny/2+1, size(Gxx, 2));   % yt-ys
+	jsum = wrapidx((mxj+nxj+1)*wg.cny/2+1, size(Gxx, 2)); % yt+ys
+	% notice one is added to mxj+nxj when computing jsum - y-center of
+	% the x-directed basis is found as j*dy+dy/2, (j is the mesh index)
+	% the two halves added together give one
 
-[ cc, ss ] = myfft(Gxy);
+	idif_jdif = sub2ind(size(cc), idif, jdif);
+	idif_jsum = sub2ind(size(cc), idif, jsum);
+	isum_jdif = sub2ind(size(cc), isum, jdif);
+	isum_jsum = sub2ind(size(cc), isum, jsum);
 
-[ mxi, nyi ] = ndgrid(mesh.xi, mesh.yi);
-[ mxj, nyj ] = ndgrid(mesh.xj, mesh.yj);
+	Zxx = (cc(idif_jdif) - cc(idif_jsum) + cc(isum_jdif) - cc(isum_jsum)) ./ 4;
 
-% y-position of x-directed bases (and x-position of y-directed) is the
-% bottom/left edge (one with minimal x/y) - that is the reason for adding
-% or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to half-cell)
-% Here for Zyx:
-%  yt=mxj*dy+dy/2 (x-directed testing)
-%  xs=nyi*dx+dx/2 (y-directed source)
-idif = wrapidx((mxi-nyi)*wg.cnx/2 - wg.cnx/4 + 1, size(Gyx, 1)); % xt-xs
-isum = wrapidx((mxi+nyi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt+xs
-jdif = wrapidx((mxj-nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt-ys
-jsum = wrapidx((mxj+nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt+ys
+	% y-directed testing, x-directed source
+	Gyx=Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_tri.*(Ne.*ky.*Ne.*kx.*Ze-Nm.*kx.*Nm.*ky.*Zm);
 
-idif_jdif = sub2ind(size(ss), idif, jdif);
-idif_jsum = sub2ind(size(ss), idif, jsum);
-isum_jdif = sub2ind(size(ss), isum, jdif);
-isum_jsum = sub2ind(size(ss), isum, jsum);
+	[ cc, ss ] = myfft(Gyx);
 
-Zxy = (-ss(idif_jsum) - ss(idif_jdif) + ss(isum_jsum) + ss(isum_jdif)) ./ 4;
+	[ myi, nxi ] = ndgrid(mlay.yi, nlay.xi);
+	[ myj, nxj ] = ndgrid(mlay.yj, nlay.xj);
 
-% y-directed testing, y-directed source
-Gyy=Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_tri.*(-Ne.*kx.*Ne.*kx./Ye-Nm.*ky.*Nm.*ky./Ym);
+	% y-position of x-directed bases (and x-position of y-directed) is the
+	% bottom/left edge (one with minimal x/y) - that is the reason for adding
+	% or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to half-cell)
+	% Here for Zyx:
+	%  xt=myi*dx+dx/2 (y-directed testing)
+	%  ys=nxj*dy+dy/2 (x-directed source)
+	idif = wrapidx((myi-nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt-xs
+	isum = wrapidx((myi+nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt+xs
+	jdif = wrapidx((myj-nxj)*wg.cny/2 - wg.cny/4 + 1, size(Gyx, 2)); % yt-ys
+	jsum = wrapidx((myj+nxj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt+ys
 
-[ cc, ss ] = myfft(Gyy);
+	idif_jdif = sub2ind(size(ss), idif, jdif);
+	idif_jsum = sub2ind(size(ss), idif, jsum);
+	isum_jdif = sub2ind(size(ss), isum, jdif);
+	isum_jsum = sub2ind(size(ss), isum, jsum);
 
-[ myi, nyi ] = ndgrid(mesh.yi, mesh.yi);
-[ myj, nyj ] = ndgrid(mesh.yj, mesh.yj);
+	Zyx = (ss(isum_jsum) - ss(isum_jdif) + ss(idif_jsum) - ss(idif_jdif)) ./ 4;
 
-% notice one is added to myi+nyi when computing isum - x-center of
-% the y-directed basis is found as i*dx+dx/2, (i is the mesh index)
-% the two halves added together give one
-idif = wrapidx((myi-nyi)*wg.cnx/2+1, size(Gyy, 1));   % xt-xs
-isum = wrapidx((myi+nyi+1)*wg.cnx/2+1, size(Gyy, 1)); % xt+xs
-jdif = wrapidx((myj-nyj)*wg.cny/2+1, size(Gyy, 2));   % yt-ys
-jsum = wrapidx((myj+nyj)*wg.cny/2+1, size(Gyy, 2));   % yt+ys
+	% x-directed testing, y-directed source
+	Gxy=Gdx_flat.*Gdy_tri.*Gdx_tri.*Gdy_flat.*(Ne.*kx.*Ne.*ky.*Ze-Nm.*ky.*Nm.*kx.*Zm);
 
-idif_jdif = sub2ind(size(cc), idif, jdif);
-idif_jsum = sub2ind(size(cc), idif, jsum);
-isum_jdif = sub2ind(size(cc), isum, jdif);
-isum_jsum = sub2ind(size(cc), isum, jsum);
+	[ cc, ss ] = myfft(Gxy);
 
-Zyy = (cc(idif_jdif) + cc(idif_jsum) - cc(isum_jdif) - cc(isum_jsum)) ./ 4;
+	[ mxi, nyi ] = ndgrid(mlay.xi, nlay.yi);
+	[ mxj, nyj ] = ndgrid(mlay.xj, nlay.yj);
 
-% compose the entire matrix
-Z = [ Zxx Zxy ; Zyx Zyy ];
+	% y-position of x-directed bases (and x-position of y-directed) is the
+	% bottom/left edge (one with minimal x/y) - that is the reason for adding
+	% or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to half-cell)
+	% Here for Zyx:
+	%  yt=mxj*dy+dy/2 (x-directed testing)
+	%  xs=nyi*dx+dx/2 (y-directed source)
+	idif = wrapidx((mxi-nyi)*wg.cnx/2 - wg.cnx/4 + 1, size(Gyx, 1)); % xt-xs
+	isum = wrapidx((mxi+nyi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt+xs
+	jdif = wrapidx((mxj-nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt-ys
+	jsum = wrapidx((mxj+nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt+ys
 
-% Identify segments which cross the waveguide boundary - the corresponding
-% elements of the Z matrix need to be multiplied by 0.5
-xmul=-(~mesh.xi | ~(mesh.xi-wg.nx))*0.5+1.0;
-ymul=-(~mesh.yj | ~(mesh.yj-wg.ny))*0.5+1.0;
-M=diag([ xmul(:) ; ymul(:) ]);
+	idif_jdif = sub2ind(size(ss), idif, jdif);
+	idif_jsum = sub2ind(size(ss), idif, jsum);
+	isum_jdif = sub2ind(size(ss), isum, jdif);
+	isum_jsum = sub2ind(size(ss), isum, jsum);
 
-% scale the impedance matrix elements for the boundary-crossing segments
-Z=M*Z*M;
+	Zxy = (-ss(idif_jsum) - ss(idif_jdif) + ss(isum_jsum) + ss(isum_jdif)) ./ 4;
+
+	% y-directed testing, y-directed source
+	Gyy=Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_tri.*(-Ne.*kx.*Ne.*kx.*Ze-Nm.*ky.*Nm.*ky.*Zm);
+
+	[ cc, ss ] = myfft(Gyy);
+
+	[ myi, nyi ] = ndgrid(mlay.yi, mlay.yi);
+	[ myj, nyj ] = ndgrid(nlay.yj, nlay.yj);
+
+	% notice one is added to myi+nyi when computing isum - x-center of
+	% the y-directed basis is found as i*dx+dx/2, (i is the mesh index)
+	% the two halves added together give one
+	idif = wrapidx((myi-nyi)*wg.cnx/2+1, size(Gyy, 1));   % xt-xs
+	isum = wrapidx((myi+nyi+1)*wg.cnx/2+1, size(Gyy, 1)); % xt+xs
+	jdif = wrapidx((myj-nyj)*wg.cny/2+1, size(Gyy, 2));   % yt-ys
+	jsum = wrapidx((myj+nyj)*wg.cny/2+1, size(Gyy, 2));   % yt+ys
+
+	idif_jdif = sub2ind(size(cc), idif, jdif);
+	idif_jsum = sub2ind(size(cc), idif, jsum);
+	isum_jdif = sub2ind(size(cc), isum, jdif);
+	isum_jsum = sub2ind(size(cc), isum, jsum);
+
+	Zyy = (cc(idif_jdif) + cc(idif_jsum) - cc(isum_jdif) - cc(isum_jsum)) ./ 4;
+
+	% compose the entire matrix block for this pair of layers
+	Zl = [ Zxx Zxy ; Zyx Zyy ];
+
+	% Identify segments which cross the waveguide boundary - the
+	% corresponding elements of the Z matrix need to be multiplied by 0.5
+	% The source segmetns which cross:
+	mxmul=-(~mlay.xi | ~(mlay.xi-wg.nx))*0.5+1.0;
+	mymul=-(~mlay.yj | ~(mlay.yj-wg.ny))*0.5+1.0;
+	Mm=diag([ mxmul(:) ; mymul(:) ]);
+
+	% And the observation segmetns which cross:
+	nxmul=-(~nlay.xi | ~(nlay.xi-wg.nx))*0.5+1.0;
+	nymul=-(~nlay.yj | ~(nlay.yj-wg.ny))*0.5+1.0;
+	Mn=diag([ nxmul(:) ; nymul(:) ]);
+
+	% scale the impedance matrix elements for the boundary-crossing segments
+	Zl=Mm*Zl*Mn;
+
+	% And, finally, put this block into the overall matrix
+	Z(cumbf(mli)+1:cumbf(mli+1), cumbf(nli)+1:cumbf(nli+1)) = Zl;
+
+    end
+end

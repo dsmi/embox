@@ -3,5 +3,5 @@ function suite_mesh
 %
 
 addTest('test_drawline');
-addTest('test_mkmesh');
+addTest('test_mklayer');
 addTest('test_findbases');
