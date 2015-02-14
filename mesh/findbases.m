@@ -26,7 +26,7 @@ for lidx = 1:length(mesh.layers)
     layer = mesh.layers(lidx);
 
     % see if user specified a particular layer
-    if ~exist('lay') || lay == lidx
+    if ~exist('lay') || lay == layer.pos
 
 	% x-directed
 	if x0 == x1
@@ -42,7 +42,7 @@ for lidx = 1:length(mesh.layers)
 	    fb = fb + length(layer.xi); % x-directed come first
 	end
 
-	b = [ b (fb + onprev) ];
+	b = [ b ; (fb + onprev) ];
 
     end
 	
