@@ -14,3 +14,5 @@ addTest('test_mkzmat');
 addTest('test_mkzsmat');
 addTest('test_tline');
 addTest('test_tlinexy');
+addTest('test_thick');
+addTest('test_coupled');

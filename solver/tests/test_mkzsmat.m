@@ -26,7 +26,12 @@ xj = xj(:);
 yi = yi(:);
 yj = yj(:);
 
-mesh=struct('xi', xi, 'xj', xj, 'yi', yi, 'yj', yj);
+layer = struct('xi', xi, 'xj', xj, 'yi', yi, 'yj', yj);
+layer.conductivity = ccopper; % like it is make of copper
+
+mesh=mkmesh(layer, 1);
+
+Zs0 = (1+j)*sqrt(mu0*wg.freq/(2*layer.conductivity));
 
 Zs=mkzsmat(wg, mesh);
 
@@ -40,7 +45,7 @@ for m=1:nxx,
     for n=1:nxx,
 	if xj(m) == xj(n),
 	    fp = @(x) ftri(x, dx*xi(m), dx)*ftri(x, dx*xi(n), dx);
-	    Zxx(m,n) = dy*quad(fp, 0, a);
+	    Zxx(m,n) = Zs0*dy*quad(fp, 0, a);
 	end
     end
 end
@@ -51,7 +56,7 @@ for m=1:nyy,
     for n=1:nyy,
 	if yi(m) == yi(n),
 	    fp = @(x) ftri(x, dy*yj(m), dy)*ftri(x, dy*yj(n), dy);
-	    Zyy(m,n) = dx*quad(fp, 0, b);
+	    Zyy(m,n) = Zs0*dx*quad(fp, 0, b);
 	end
     end
 end

@@ -1,5 +1,5 @@
-function b = findbases(mesh, nx, ny, x0, y0, x1, y1, lay)
-% b = findbases(mesh, nx, ny, x0, y0, x1, y1, lay)
+function b = findbases(mesh, nx, ny, x0, y0, x1, y1, flay)
+% b = findbases(mesh, nx, ny, x0, y0, x1, y1, flay)
 %
 % Finds basis functions, whether x-directed or y-directed, crossing the
 % given line. Uses normalized coordinates (0..1). Follows the common agreement
@@ -26,7 +26,7 @@ for lidx = 1:length(mesh.layers)
     layer = mesh.layers(lidx);
 
     % see if user specified a particular layer
-    if ~exist('lay') || lay == layer.pos
+    if ~exist('flay') || flay(layer.pos)
 
 	% x-directed
 	if x0 == x1

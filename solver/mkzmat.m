@@ -1,5 +1,5 @@
 function Z=mkzmat(wg, mesh)
-% Z=mkzmat(wg, xx, xy, yx, yy, dx, dy)
+% Z=mkzmat(wg, mesh)
 % Populates the impedance/reactions matrix
 %
 % wg     - shiedling parameters, see wgparams

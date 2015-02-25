@@ -29,3 +29,6 @@ By = B+[ B(:,2:end)  zeros(size(B, 1), 1) ];
 [ yi, yj ] = find(By(2:end-1,:) > 1.5);
 
 layer=struct('xi', xi-1, 'xj', xj-1, 'yi', yi-1, 'yj', yj-1);
+
+% Made of copper by default
+layer.conductivity = ccopper;

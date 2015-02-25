@@ -1,5 +1,5 @@
-function [ Y Z ]=solvey(wg, mesh, ports, portw)
-% [ Y Z ]=solvey(wg, mesh, ports, portw)
+function [ Y I Z ]=solvey(wg, mesh, ports, portw)
+% [ Y I Z ]=solvey(wg, mesh, ports, portw)
 %
 % Given a system of conductors with N ports, this function calculates
 % the admittance matrix Y of size N-by-N.
@@ -12,11 +12,22 @@ function [ Y Z ]=solvey(wg, mesh, ports, portw)
 %             corresponding basis functions.
 % Outputs:
 %    Y      - the admittance matrix.
+%    I      - mesh_size-by-num_of_ports matrix, I(:,n) gives the currents due
+%             to the unit voltage applied to the port n
 %    Z      - the generalized impedance matrix (for all the basis functions)
 %
 
-% The impedance matrix!
-Z=mkzmat(wg, mesh);
+% The impedance matrix assuming perfect conductivity
+Zpec=mkzmat(wg, mesh);
+
+% surface impedance
+Zs = mkzsmat(wg, mesh);
+
+% The effective impedance matrix: pec - surface impedace
+Z = Zpec - Zs;
+
+% The linear system solution will need memory
+clear Zpec  Zs
 
 % Number of the basis functions
 N=size(Z,1);
@@ -34,4 +45,7 @@ portwi = cell2mat(portw);
 V = zeros(N,np);
 V(sub2ind(size(V), faceidx, fportidx)) = portwi;
 
-Y=-V.'*(Z\V);
+% Currents due to the voltages applied to the ports
+I = Z\V;
+% And the admittance matrix
+Y = -V.'*I;

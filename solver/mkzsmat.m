@@ -13,26 +13,66 @@ function Z=mkzsmat(wg, mesh)
 % mesh   - meshed metal, see mkmesh
 % 
 
-[ mxi, nxi ] = ndgrid(mesh.xi, mesh.xi);
-[ mxj, nxj ] = ndgrid(mesh.xj, mesh.xj);
+% We want to pre-allocate the Z matrix, for that we need to know its size.
+% To calculate the size we need to count the basis functions on all layers.
+numx = sum(cellfun(@(v) length(v), { mesh.layers(:).xi }));
+numy = sum(cellfun(@(v) length(v), { mesh.layers(:).yi }));
+numbf = numx + numy;
 
-% area of one cell - used in the integrals
-acell = (wg.a/wg.nx)*(wg.b/wg.ny);
+% We also compute the cumulative sums of numbers of the basis functions in
+% the layers up to the given one which is then used to place the blocks
+% of the matrix (see below)
+cumx = cumsum(cellfun(@(v) length(v), { mesh.layers(:).xi }));
+cumy = cumsum(cellfun(@(v) length(v), { mesh.layers(:).yi }));
+cumbf = [ 0 (cumx + cumy) ];
 
-% x-directed basis functions
-ho = (abs(mxi - nxi) == 1)*(1/6); % half overlap case
-fo = (mxi == nxi).*(1/3 + 1/3*((mxi > 0) & (mxi < wg.nx))); % full overlap
-Zxx = acell*(mxj==nxj).*(ho+fo);
+% Pre-allocate it!
+Z = zeros(numbf);
 
-[ myi, nyi ] = ndgrid(mesh.yi, mesh.yi);
-[ myj, nyj ] = ndgrid(mesh.yj, mesh.yj);
+% Here we start popolating the impedance matrix. The geometry consists of a
+% number of layers of metallization (vias are on their way) and the Z matrix
+% consists of N-by-N blocks where N is the number of layers. The block M(m,n)
+% corresponds to the m-th observation and n-th source layer - and in case of
+% the surface impedance it only has nonzeros if m == n.
+for lidx = 1:length(mesh.layers)
 
-% y-directed basis functions
-ho = (abs(myj - nyj) == 1)*(1/6); % half overlap case
-fo = (myj == nyj).*(1/3 + 1/3*((myj > 0) & (myj < wg.ny))); % full overlap
-Zyy = acell*(myi==nyi).*(ho+fo);
+    layer = mesh.layers(lidx);
 
-% compose the entire matrix
-Zxy = zeros(size(Zxx,1), size(Zyy,2));
-Zyx = zeros(size(Zyy,1), size(Zxx,2));
-Z = [ Zxx Zxy ; Zyx Zyy ];
+    [ mxi, nxi ] = ndgrid(layer.xi, layer.xi);
+    [ mxj, nxj ] = ndgrid(layer.xj, layer.xj);
+
+    % area of one cell - used in the integrals
+    acell = (wg.a/wg.nx)*(wg.b/wg.ny);
+
+    % x-directed basis functions
+    ho = (abs(mxi - nxi) == 1)*(1/6); % half overlap case
+    fo = (mxi == nxi).*(1/3 + 1/3*((mxi > 0) & (mxi < wg.nx))); % full overlap
+    Zxx = acell*(mxj==nxj).*(ho+fo);
+
+    [ myi, nyi ] = ndgrid(layer.yi, layer.yi);
+    [ myj, nyj ] = ndgrid(layer.yj, layer.yj);
+
+    % y-directed basis functions
+    ho = (abs(myj - nyj) == 1)*(1/6); % half overlap case
+    fo = (myj == nyj).*(1/3 + 1/3*((myj > 0) & (myj < wg.ny))); % full overlap
+    Zyy = acell*(myi==nyi).*(ho+fo);
+
+    % compose the entire matrix block for this pair of layers
+    Zxy = zeros(size(Zxx,1), size(Zyy,2));
+    Zyx = zeros(size(Zyy,1), size(Zxx,2));
+    Zl = [ Zxx Zxy ; Zyx Zyy ];
+
+    if isfield(layer, 'conductivity')
+	% If the conductivity is defined
+	conductivity = layer.conductivity;
+	% compute the surface impedance (as the impedance of a half
+	% space) for this layer
+	Zs = (1+j)*sqrt(mu0*wg.freq/(2*conductivity));
+    else
+	Zs = 0; % perfect conductor otherwise
+    end
+
+    % And, finally, put this block into the overall matrix
+    Z(cumbf(lidx)+1:cumbf(lidx+1), cumbf(lidx)+1:cumbf(lidx+1)) = Zs*Zl;
+
+end
