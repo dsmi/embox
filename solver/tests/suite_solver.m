@@ -16,3 +16,4 @@ addTest('test_tline');
 addTest('test_tlinexy');
 addTest('test_thick');
 addTest('test_coupled');
+addTest('test_fnorm');
