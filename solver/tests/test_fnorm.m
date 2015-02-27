@@ -39,11 +39,11 @@ for m=1:(maxm),
 	% integrage magnitude of psi_e^2
 	psi_e2 = (cos(kx(m,n)*x).*cos(ky(m,n)*y)).^2;
 	ipsi_e2 = sum(psi_e2(:))/(na*nb)*(a*b);
-	test_fe(m,n) = ne(m,n)*ipsi_e2;
+	test_fe(m,n) = ne(m,n)^2*ipsi_e2;
 	% integrage magnitude of psi_m^2
 	psi_m2 = (sin(kx(m,n)*x).*sin(ky(m,n)*y)).^2;
 	ipsi_m2 = sum(psi_m2(:))/(na*nb)*(a*b);
-	test_fm(m,n) = nm(m,n)*ipsi_m2;
+	test_fm(m,n) = nm(m,n)^2*ipsi_m2;
     end
 end
 

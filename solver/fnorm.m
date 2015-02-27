@@ -15,15 +15,17 @@ function [ fe, fm ] = fnorm(a, b, maxm, maxn)
 
 % Normalization coefficients for the eigenfunctions
 [ ne, nm ] = wnorm(a, b, maxm, maxn);
+ne2 = ne.^2;
+nm2 = nm.^2;
 
 % TE modes
-fe = a*b/4*ne;
-fe(2:end,1) = a*b/2*ne(2:end,1);
-fe(1,2:end) = a*b/2*ne(1,2:end);
-fe(1,1) = a*b*ne(1,1);
+fe = a*b/4*ne2;
+fe(2:end,1) = a*b/2*ne2(2:end,1);
+fe(1,2:end) = a*b/2*ne2(1,2:end);
+fe(1,1) = a*b*ne2(1,1);
 
 % TM modes
-fm = a*b/4*nm;
+fm = a*b/4*nm2;
 fm(2:end,1) = 0;
 fm(1,2:end) = 0;
 fm(1,1) = 0;
