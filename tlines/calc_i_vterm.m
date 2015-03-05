@@ -6,8 +6,8 @@ function i = calc_i_vterm(tl,zobs,iobs)
 % point of this tline.
 %   tl   - structure with transmission lines parameters and auxiliary
 %          data as returned by calc_tlines.
-%   zsrc - source coordinate.
-%   jsrc - source tline index.
+%   zobs - observation coordinate.
+%   iobs - observation tline index.
 
 denom = 1 + tl.Gls(:,iobs).*tl.t(:,iobs);
 ex1 = exp(-2*tl.k(:,iobs).*(zobs - tl.z(:,iobs)));

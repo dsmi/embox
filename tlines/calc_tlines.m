@@ -74,6 +74,9 @@ function tl=calc_tlines(z, Z0, k, Gls1, GgrN)
 %            section, z<z'. There is no corresponding Tgr coefficient
 %            because the case when z>z' the voltage/current is found
 %            by reciprocity.
+%     Tgr    Similaro to Tls, ratioof voltage at terminal k+1 to the
+%            voltage at terminal k.
+%                Tgr(k)=V(z(k+1))/V(z(k))
 %
 
 tl.z = z;
@@ -124,3 +127,4 @@ end
 
 % Calculate the transfer coefficients
 tl.Tls=(1+tl.Gls).*tl.t1./(1+tl.Gls.*tl.t);
+tl.Tgr=(1+tl.Ggr).*tl.t1./(1+tl.Ggr.*tl.t);

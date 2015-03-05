@@ -31,11 +31,7 @@ else
 	ex4 = exp(-tl.k(:,n).*(2*tl.d(:,n)-(zobs-zsrc)));
 	v4 = -tl.Gls(:,n).*tl.Ggr(:,n).*ex4;
 	ex0 = exp(-tl.k(:,iobs).*abs(zobs-zsrc));
-	if zobs>zsrc,
-		v0 = ex0;
-	else
-		v0 = -ex0;
-	end
+	v0 = ((zobs>zsrc)*2-1).*ex0;
 	v = v0 + (v1+v2+v3+v4)./(1-tl.Gls(:,n).*tl.Ggr(:,n).*tl.t(:,n));
 	v = v/2;
 end

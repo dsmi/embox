@@ -30,12 +30,8 @@ else
 	i3 = tl.Gls(:,n).*tl.Ggr(:,n).*ex3;
 	ex4 = exp(-tl.k(:,n).*(2*tl.d(:,n)-(zobs-zsrc)));
 	i4 = -tl.Gls(:,n).*tl.Ggr(:,n).*ex4;
-	ex0 = exp(-tl.k(:,iobs).*abs(zobs-zsrc));
-	if zobs>zsrc,
-		i0 = ex0;
-	else
-		i0 = -ex0;
-	end
+	s0 = (zobs>zsrc)*2-1;
+	i0 = s0.*exp(-tl.k(:,iobs).*s0.*(zobs-zsrc));
 	i = i0 + (i1+i2+i3+i4)./(1-tl.Gls(:,n).*tl.Ggr(:,n).*tl.t(:,n));
 	i = i/2;
 end
