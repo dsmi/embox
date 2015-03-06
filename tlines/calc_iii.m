@@ -19,7 +19,7 @@ if iobs<jsrc,
 	i = vt.*calc_ii_vterm(tl,iobs);
 else if iobs>jsrc,
 	% Find voltage at the right terminal of the source tline
-	vt = calc_vi(tl,tl.z(jsrc+1),jsrc,zsrc,jsrc);
+	vt = calc_vi(tl,tl.z(:,jsrc+1),jsrc,zsrc,jsrc);
 	% Next, find voltage at the left terminal of the observation tline
 	vt = vt.*prod(tl.Tgr(:,jsrc+1:iobs-1),2);
 	% Finally, find voltage at the observation point

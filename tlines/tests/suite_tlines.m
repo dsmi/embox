@@ -10,3 +10,4 @@ addTest('test_tlines_ivd');
 addTest('test_tlines_vvd');
 addTest('test_tlines_iii');
 addTest('test_tlines_iivd');
+addTest('test_tlines_2');
