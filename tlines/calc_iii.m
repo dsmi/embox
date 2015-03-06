@@ -30,18 +30,16 @@ else
 	d = tl.d(:,n);
 	z1 = tl.z(:,n);
 	z2 = tl.z(:,n+1);
-	iex1 = (exp(k.*z2)-exp(k.*z1))./k;
-	ex1 = exp(-k.*2.*z2).*iex1.*exp(k.*zsrc);
+	ex1 = (exp(-k.*(z2-zsrc))-exp(-k.*(2.*z2-zsrc-z1)));
 	i1 = -tl.Ggr(:,n).*ex1;
-	iex2 = (exp(-k.*z2)-exp(-k.*z1))./(-k);
-	ex2 = exp(k.*2.*z1).*iex2.*exp(-k.*zsrc);
+	ex2 = -(exp(k.*(2.*z1-zsrc-z2))-exp(k.*(z1-zsrc)));
 	i2 = tl.Gls(:,n).*ex2;
-	ex3 = exp(-k.*2.*d).*iex2.*exp(k.*zsrc);
+	ex3 = -(exp(-k.*(2.*d-zsrc+z2))-exp(-k.*(2.*d-zsrc+z1)));
 	i3 = tl.Gls(:,n).*tl.Ggr(:,n).*ex3;
-	ex4 = exp(-k.*2.*d).*iex1.*exp(-k.*zsrc);
+	ex4 = (exp(-k.*(2.*d+zsrc-z2))-exp(-k.*(2.*d+zsrc-z1)));
 	i4 = -tl.Gls(:,n).*tl.Ggr(:,n).*ex4;
-	i0 = (exp(k.*z1).*exp(-k.*zsrc) - exp(-k.*z2).*exp(k.*zsrc))./k;
+	i0 = (exp(k.*(z1-zsrc)) - exp(-k.*(z2-zsrc)));
 	i = i0 + (i1+i2+i3+i4)./(1-tl.Gls(:,n).*tl.Ggr(:,n).*tl.t(:,n));
-	i = i/2;
+	i = i./(2*k);
 end
 end

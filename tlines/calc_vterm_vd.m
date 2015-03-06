@@ -15,10 +15,6 @@ Yls=tl.Y0(:,jsrc).*(tl.Gls(:,jsrc)-1)./(tl.Gls(:,jsrc)+1);
 Ygr=tl.Y0(:,jsrc-1).*(1-tl.Ggr(:,jsrc-1))./(1+tl.Ggr(:,jsrc-1));
 M=Ygr./((Ygr-Yls).*(1-tl.Ggr(:,jsrc).*tl.t(:,jsrc)));
 
-%% zsrc = tl.z(3)+1e-4;
-%% ex2 = exp(tl.k(:,jsrc).*tl.z(:,jsrc)).*exp(-tl.k(:,jsrc).*zsrc);
-%% ex3 = exp(-tl.k(:,jsrc).*(2*tl.z(:,jsrc+1)-tl.z(:,jsrc)))*exp(tl.k(:,jsrc).*zsrc);
-
 k = tl.k(:,jsrc);
 d = tl.d(:,jsrc);
 ex2 = 1-exp(-k.*d);

@@ -30,25 +30,17 @@ else
 	z1 = tl.z(:,n);
 	z2 = tl.z(:,n+1);
 	d = tl.d(:,n);
-	iex1 = (exp(k.*z2)-exp(k.*z1))./k;
-	ex1 = exp(-k.*2.*z2).*exp(k.*zobs).*iex1;
+	ex1 = (exp(-k.*(z2-zobs))-exp(-k.*(2.*z2-zobs-z1)));
 	v1 = tl.Ggr(:,n).*ex1;
-	iex2 = (exp(-k.*z2)-exp(-k.*z1))./(-k);
-	ex2 = exp(k.*2.*z1).*exp(-k.*zobs).*iex2;
+	ex2 = -(exp(k.*(2.*z1-zobs-z2))-exp(k.*(2.*z1-zobs-z1)));
 	v2 = -tl.Gls(:,n).*ex2;
-	ex3 = exp(-k.*2*d).*exp(-k.*zobs).*iex1;
+	ex3 = (exp(-k.*(2.*d+zobs-z2))-exp(-k.*(2.*d+zobs-z1)));
 	v3 = tl.Gls(:,n).*tl.Ggr(:,n).*ex3;
-	ex4 = exp(-k.*2.*d).*exp(k.*zobs).*iex2;
+	ex4 = -(exp(-k.*(2.*d-zobs+z2))-exp(-k.*(2.*d-zobs+z1)));
 	v4 = -tl.Gls(:,n).*tl.Ggr(:,n).*ex4;
-	%% if zobs>zsrc,
-	%%     ex0 = exp(-k.*zobs).*exp(k.*zsrc);
-	%% else
-	%%     ex0 = -exp(k.*zobs).*exp(-k.*zsrc);
-	%% end
-	% [ z1 zobs ] + [ zobs z2 ]
-	ex0 = exp(-k.*zobs).*(exp(k.*zobs)-exp(k.*z1))./k - exp(k.*zobs).*(exp(-k.*z2)-exp(-k.*zobs))./(-k);
+	ex0 = (1-exp(-k.*(zobs-z1))) + (exp(k.*(zobs-z2))-1);
 	v0 = ex0;
 	v = v0 + (v1+v2+v3+v4)./(1-tl.Gls(:,n).*tl.Ggr(:,n).*tl.t(:,n));
-	v = v/2;
+	v = v./(2*k);
 end
 end
