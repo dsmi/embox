@@ -1,5 +1,5 @@
-function i = calc_iivd(tl,zobs,iobs,jsrc)
-% i = calc_iivd(tl,zobs,iobs,jsrc)
+function i = calc_iivd(tl,iobs,jsrc)
+% i = calc_iivd(tl,iobs,jsrc)
 %
 % Part of the tlines calculator (see calc_tlines), given the unit
 % distributed voltage source (voltage unit per length unit) which
@@ -7,7 +7,6 @@ function i = calc_iivd(tl,zobs,iobs,jsrc)
 % the length of this or another tline.
 %   tl   - structure with transmission lines parameters and auxiliary
 %          data as returned by calc_tlines.
-%   zobs - observation coordinate.
 %   iobs - observation tline index.
 %   jsrc - source tline index.
 

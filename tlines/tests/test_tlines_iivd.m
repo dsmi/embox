@@ -35,7 +35,7 @@ for iobs=1:5
 	dl=tl.d(iobs)/n;
 	zi=linspace(tl.z(iobs), tl.z(iobs+1), n);
 	test_ii = sum(calc_ivd(tl, zi, iobs, jsrc))*dl;
-	ii      = calc_iivd(tl,  0, iobs, jsrc);
+	ii      = calc_iivd(tl, iobs, jsrc);
 	tol = 1e-14+abs(ii)*1e-6;
 	assertEquals(test_ii, ii, tol);
     end
