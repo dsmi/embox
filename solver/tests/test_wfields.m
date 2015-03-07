@@ -38,7 +38,7 @@ x0=dx*si;
 y0=dy*sj+dy/2;
 
 % try x-directed basis first
-[ Z Ve Ye Vm Ym ]=calczmn(wg, si, sj, 1, si, sj, 1, dx, dy);
+[ Z Ve Ye Vm Ym ]=calczmn(wg, si, sj, 1, 1, si, sj, 1, 1);
 
 % Upper limits of the waveguide mode orders to be used when computing fields
 % T(E/M)[0..M-1][0..N-1] modes are used. 
@@ -96,7 +96,7 @@ x0=dx*si+dx/2;
 y0=dy*sj;
 
 % try y-directed basis
-[ Z Ve Ye Vm Ym ]=calczmn(wg, si, sj, 1, si, sj, 0, dx, dy);
+[ Z Ve Ye Vm Ym ]=calczmn(wg, si, sj, 1, 1, si, sj, 1, 0);
 
 for x=linspace(x0-dx*0.6, x0+dx*0.6, 4),
     for y=linspace(y0-dy*1.5, y0+dy*1.5, 7),

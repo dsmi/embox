@@ -27,21 +27,21 @@ ni=10;
 nj=5;
 
 % x directed testing, x directed source
-Zxx=calczmn(wg, mi, mj, 1, ni, nj, 1);
-Zxx2=calczmn2(wg, mi, mj, 1, ni, nj, 1);
+Zxx=calczmn(wg, mi, mj, 1, 1, ni, nj, 1, 1);
+Zxx2=calczmn2(wg, mi, mj, 1, 1, ni, nj, 1, 1);
 assertEquals(Zxx, Zxx2, 1e-18);
 
 % y directed testing, x directed source
-Zyx=calczmn(wg, mi, mj, 0, ni, nj, 1);
-Zyx2=calczmn2(wg, mi, mj, 0, ni, nj, 1);
+Zyx=calczmn(wg, mi, mj, 1, 0, ni, nj, 1, 1);
+Zyx2=calczmn2(wg, mi, mj, 1, 0, ni, nj, 1, 1);
 assertEquals(Zyx, Zyx2, 1e-18);
 
 % x directed testing, y directed source
-Zxy=calczmn(wg, mi, mj, 1, ni, nj, 0);
-Zxy2=calczmn2(wg, mi, mj, 1, ni, nj, 0);
+Zxy=calczmn(wg, mi, mj, 1, 1, ni, nj, 1, 0);
+Zxy2=calczmn2(wg, mi, mj, 1, 1, ni, nj, 1, 0);
 assertEquals(Zxy, Zxy2, 1e-18);
 
 % y directed testing, y directed source
-Zyy=calczmn(wg, mi, mj, 0, ni, nj, 0);
-Zyy2=calczmn2(wg, mi, mj, 0, ni, nj, 0);
+Zyy=calczmn(wg, mi, mj, 1, 0, ni, nj, 1, 0);
+Zyy2=calczmn2(wg, mi, mj, 1, 0, ni, nj, 1, 0);
 assertEquals(Zyy, Zyy2, 1e-18);

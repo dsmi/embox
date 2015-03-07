@@ -1,14 +1,16 @@
-function [ Z Ve Ye Vm Ym ] = calczmn(wg, ti, tj, xdt, si, sj, xds)
-% Z=calczmn(wg, ti, tj, xdt, si, yj, xds)
+function [ Z Ve Ye Vm Ym ] = calczmn(wg, ti, tj, tl, ttype, si, sj, sl, stype)
+% Z=calczmn(wg, ti, tj, tl, ttype, si, sj, sl, stype)
 %  Calculates element of the generalized impedance matrix. The summation is
 %  done directly - not using FFT - so this function works quite slow and is
 %  only used for tests.
 %
 % wg     - shiedling parameters, see wgparams
 % ti, tj - testing segment coordinates in mesh
-% xdt    - 1 for x-directed testing segment, 0 for y-directed
+% tl     - testing segment position in the layers stackup
+% ttype  - 1 for x-directed testing segment, 0 for y-directed, 2 for via
 % si, sj - source segment coordinates in mesh
-% yds    - 1 for x-directed source segment, 0 for y-directed
+% sl     - source segment layer
+% stype  - 1 for x-directed source segment, 0 for y-directed, 2 for via
 %
 % Returns the matrix element and mode voltages and admittances which can be
 % (are supposed to be) used for some additional tests.
@@ -69,23 +71,16 @@ Y0m=(j*freq*repmat(shiftdim(weps(:), -2), maxm, maxn))./gamma;
 % normalization coefficients for te and tm waveguide modes
 [ Ne, Nm ] = wnorm(a, b, maxm, maxn);
 
-% left-looking reflection coefficient at z=0
-Gls0=wg.Gls0;
-% left-looking reflection coefficient at z=h(1)
-Gls=Gls0*exp(-2*gamma(:,:,1)*h(1));
+% layers/tlines endpoints coordinates
+z=cumsum(h); 
 
-% right-looking reflection coefficient at the top z=sum(h)
-Ggr0=wg.Ggr0;
-% right-looking reflection coefficient at z=h(1)
-Ggr=Ggr0*exp(2*gamma(:,:,2)*(-h(2)));
-
-% TE and TM admittances at z->h+
-Ye_gr=(1-Ggr)./(1+Ggr).*Y0e(:,:,2);
-Ym_gr=(1-Ggr)./(1+Ggr).*Y0m(:,:,2);
-
-% TE and TM admittances at z->h-
-Ye_ls=-(1-Gls)./(1+Gls).*Y0e(:,:,1);
-Ym_ls=-(1-Gls)./(1+Gls).*Y0m(:,:,1);
+% Prepare inputs for the tlines calculators - one for te and one for
+% tm modes. The reshaping is needed because the calculator only allows
+% one dimension for the tline parameters.
+ztlc = reshape(repmat(shiftdim([ 0 ; z(:) ], -2), maxm, maxn), [], nl+1);
+ktlc = reshape(gamma, [], nl);
+tle=calc_tlines(ztlc, reshape(1./Y0e, [], nl), ktlc, wg.Gls0, wg.Ggr0);
+tlm=calc_tlines(ztlc, reshape(1./Y0m, [], nl), ktlc, wg.Gls0, wg.Ggr0);
 
 % mesh cell sizes
 dx=wg.a/wg.nx;
@@ -103,46 +98,64 @@ Gdy_tri=gtri(dy,ky);
 % Multiplier resulting from y-integration of the constant (rectangular) b.f.
 Gdy_flat=gflat(dy,ky);
 
-% Admittance to be used when finding the mode voltages
-Ye=Ye_gr-Ye_ls;
-Ym=Ym_gr-Ym_ls;
-
 % coordinates of the source segment center
 xs=si*dx;
 ys=sj*dy;
-if xds
+if stype == 1      % x-directed
    ys=ys+dy/2;
-else
+elseif stype == 0  % y-directed
    xs=xs+dx/2;
+else               % via
+   xs=xs+dx/2;
+   ys=ys+dy/2;
 end
 
 % coordinates of the testing segment center
 xt=ti*dx;
 yt=tj*dy;
-if xdt
+if ttype == 1      % x-directed
    yt=yt+dy/2;
-else
+elseif ttype == 0  % y-directed
    xt=xt+dx/2;
+else               % via
+   xt=xt+dx/2;
+   yt=yt+dy/2;
 end
 
-if xds
-    % TE and TM mode voltages at z=h, x-directed current
-    Ve=-Ne.*ky.*Gdx_tri.*Gdy_flat.*cos(kx.*xs).*sin(ky.*ys)./Ye;
-    Vm= Nm.*kx.*Gdx_tri.*Gdy_flat.*cos(kx.*xs).*sin(ky.*ys)./Ym;
-else
-    % TE and TM mode voltages at z=h, y-directed current
-    Ve=Ne.*kx.*Gdx_flat.*Gdy_tri.*sin(kx.*xs).*cos(ky.*ys)./Ye;
-    Vm=Nm.*ky.*Gdx_flat.*Gdy_tri.*sin(kx.*xs).*cos(ky.*ys)./Ym;
+% The waveguide modes are described in terms of equivalent transmission
+% lines, and here we compute the current sources in the transmission lines
+% which corresponds to the source current in the waveguide.
+if stype == 1
+    % TE and TM mode current sources, x-directed current
+    Ie=-Ne.*ky.*Gdx_tri.*Gdy_flat.*cos(kx.*xs).*sin(ky.*ys);
+    Im= Nm.*kx.*Gdx_tri.*Gdy_flat.*cos(kx.*xs).*sin(ky.*ys);
+elseif stype == 0
+    % TE and TM mode current sources, y-directed current
+    Ie=Ne.*kx.*Gdx_flat.*Gdy_tri.*sin(kx.*xs).*cos(ky.*ys);
+    Im=Nm.*ky.*Gdx_flat.*Gdy_tri.*sin(kx.*xs).*cos(ky.*ys);
+else               
+% via
 end
 
-if xdt
+% Use the tlines calculator to find the admittance between source and
+% observation points in the equivalent transmission lines
+Ye = 1./reshape(calc_vi(tle, z(tl), tl, z(sl), sl), maxm, maxn);
+Ym = 1./reshape(calc_vi(tlm, z(tl), tl, z(sl), sl), maxm, maxn);
+
+% Now find mode voltages from the mode currents
+Ve = Ie./Ye;
+Vm = Im./Ym;
+
+if ttype == 1
     % x-directed testing function
     Ze=sum(sum( Ve.*Ne.*ky.*Gdx_tri.*Gdy_flat.*cos(kx.*xt).*sin(ky.*yt), 2), 1);
     Zm=sum(sum(-Vm.*Nm.*kx.*Gdx_tri.*Gdy_flat.*cos(kx.*xt).*sin(ky.*yt), 2), 1);
-else
+elseif ttype == 0
     % y-directed testing function
     Ze=sum(sum(-Ve.*Ne.*kx.*Gdx_flat.*Gdy_tri.*sin(kx.*xt).*cos(ky.*yt), 2), 1);
     Zm=sum(sum(-Vm.*Nm.*ky.*Gdx_flat.*Gdy_tri.*sin(kx.*xt).*cos(ky.*yt), 2), 1);
+else               
+% via
 end
 
 Z=Ze+Zm;

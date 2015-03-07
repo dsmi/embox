@@ -24,28 +24,52 @@ Z=zeros(n,n);
 % Zxx
 for m=1:nx,
     for n=1:nx,
-	Z(m,n)=calczmn(wg, layer.xi(m), layer.xj(m), 1, layer.xi(n), layer.xj(n), 1);
+	xim = layer.xi(m);
+	xjm = layer.xj(m);
+	posm = layer.pos;
+	xin = layer.xi(n);
+	xjn = layer.xj(n);
+	posn = layer.pos;
+	Z(m,n)=calczmn(wg, xim, xjm, posm, 1, xin, xjn, posn, 1);
     end
 end
 
 % Zxy
 for m=1:nx,
     for n=1:ny,
-	Z(m,nx+n)=calczmn(wg, layer.xi(m), layer.xj(m), 1, layer.yi(n), layer.yj(n), 0);
+	xim = layer.xi(m);
+	xjm = layer.xj(m);
+	posm = layer.pos;
+	yin = layer.yi(n);
+	yjn = layer.yj(n);
+	posn = layer.pos;
+	Z(m,nx+n)=calczmn(wg, xim, xjm, posm, 1, yin, yjn, posn, 0);
     end
 end
 
 % Zyx
 for m=1:ny,
     for n=1:nx,
-	Z(nx+m,n)=calczmn(wg, layer.yi(m), layer.yj(m), 0, layer.xi(n), layer.xj(n), 1);
+	yim = layer.yi(m);
+	yjm = layer.yj(m);
+	posm = layer.pos;
+	xin = layer.xi(n);
+	xjn = layer.xj(n);
+	posn = layer.pos;
+	Z(nx+m,n)=calczmn(wg, yim, yjm, posm, 0, xin, xjn, posn, 1);
     end
 end
 
 % Zyy
 for m=1:ny,
     for n=1:ny,
-	Z(nx+m,nx+n)=calczmn(wg, layer.yi(m), layer.yj(m), 0, layer.yi(n), layer.yj(n), 0);
+	yim = layer.yi(m);
+	yjm = layer.yj(m);
+	posm = layer.pos;
+	yin = layer.yi(n);
+	yjn = layer.yj(n);
+	posn = layer.pos;
+	Z(nx+m,nx+n)=calczmn(wg, yim, yjm, posm, 0, yin, yjn, posn, 0);
     end
 end
 
