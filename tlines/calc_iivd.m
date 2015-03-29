@@ -40,6 +40,6 @@ else
 	i4 = tl.Gls(:,n).*tl.Ggr(:,n).*ex4;
 	ex0 = (2*d-(2-2*t1)./k)./k;
 	i = ex0 + (i1+i2+i3+i4)./(1-tl.Gls(:,n).*tl.Ggr(:,n).*tl.t(:,n));
-	i = sum(i .* (tl.Y0(:,n)/2));
+	i = i .* (tl.Y0(:,n)/2);
 end
 end
