@@ -25,10 +25,15 @@ xj=[ 2 3 2 ];
 yi=[ 3 1 3 2 ];
 yj=[ 4 3 2 1 ];
 
-layer=struct('xi', xi, 'xj', xj, 'yi', yi, 'yj', yj);
+% no vias
+vi = ones(0,1);
+vj = ones(0,1);
+
+layer=struct('xi', xi, 'xj', xj, 'yi', yi, 'yj', yj, 'vi', vi, 'vj', vj);
 layer.pos = 1; % position in the stackup
 
 mesh.layers(1) = layer;
+mesh.vias(1) = struct('vi', [], 'vj', [], 'pos', 1);
 
 Zt=mkzmat2(wg, mesh);
 Z=mkzmat(wg, mesh);

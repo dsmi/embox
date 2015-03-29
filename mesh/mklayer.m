@@ -10,14 +10,18 @@ function layer = mklayer(B)
 % and the resulting structure has the following fields:
 %   xi, xj - in-grid coordinates of the x-directed basis functions
 %   yi, yj - in-grid coordinates of the y-directed basis functions
+% In addition the layer may contain vias, which are the connections between
+% this layer and the next one. This function does not create vias, but they
+% can be added by other means. The corresponding fields are:
+%   vi, vj - in-grid coordinates of the via basis functions
 % Each basis function is represented by coordinates of its supporting point,
 % see drawing below where the supporting point is marked by 'o'
 % 
 %         +--+
 % y       |  |   
-% ^       o--+   +--+--+
-% |       |  |   |  |  |
-% +-> x   +--+   +--o--+
+% ^       o--+   +--+--+   +--+
+% |       |  |   |  |  |   |  | <- this is via
+% +-> x   +--+   +--o--+   o--+
 %
 
 % Identify x-directed basis functions
@@ -29,6 +33,10 @@ By = B+[ B(:,2:end)  zeros(size(B, 1), 1) ];
 [ yi, yj ] = find(By(2:end-1,:) > 1.5);
 
 layer=struct('xi', xi-1, 'xj', xj-1, 'yi', yi-1, 'yj', yj-1);
+
+% empty fields for the via
+layer.vi = ones(0,1);
+layer.vj = ones(0,1);
 
 % Made of copper by default
 layer.conductivity = ccopper;

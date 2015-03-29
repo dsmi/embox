@@ -134,17 +134,68 @@ elseif stype == 0
     Ie=Ne.*kx.*Gdx_flat.*Gdy_tri.*sin(kx.*xs).*cos(ky.*ys);
     Im=Nm.*ky.*Gdx_flat.*Gdy_tri.*sin(kx.*xs).*cos(ky.*ys);
 else               
-% via
+    % Calculate the distributed voltage source intensity in the waveguide
+    % equivalent transmission line due to the via current by evaluating
+    % integral of the via current multiplied by the eigenfunction.
+    % The eigenfunction for the tm modes is: Psi_m=nm*sin(kx*x)*sin(ky*y)
+    m=kc.*kc./(j*freq*weps(sl));
+    Vdm=m.*Nm.*Gdx_flat.*Gdy_flat.*sin(kx.*xs).*sin(ky.*ys);
 end
 
-% Use the tlines calculator to find the admittance between source and
-% observation points in the equivalent transmission lines
-Ye = 1./reshape(calc_vi(tle, z(tl), tl, z(sl), sl), maxm, maxn);
-Ym = 1./reshape(calc_vi(tlm, z(tl), tl, z(sl), sl), maxm, maxn);
+% Only used when both source and testing are horizontal, otherwise zero
+Ye = 0;
+Ym = 0;
+Ve = 0;
+Vm = 0;
 
-% Now find mode voltages from the mode currents
-Ve = Ie./Ye;
-Vm = Im./Ym;
+if stype == 0 || stype == 1 
+    if ttype == 0 || ttype == 1 
+	% Use the tlines calculator to find the admittance between source and
+	% observation points in the equivalent transmission lines
+	Ye = 1./reshape(calc_vi(tle, z(tl), tl, z(sl), sl), maxm, maxn);
+	Ym = 1./reshape(calc_vi(tlm, z(tl), tl, z(sl), sl), maxm, maxn);
+
+	% Now find mode voltages from the mode currents
+	Ve = Ie./Ye;
+	Vm = Im./Ym;
+    else
+	% The case when the testing function is via - we need to
+	% find the integral of the current over the target layer
+	IIm = Im.*reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
+    end
+else
+    if ttype == 0 || ttype == 1 
+	% Shift the via-induced voltage to the observation segment position
+	Vm = Vdm.*reshape(calc_vvd(tlm, z(tl), tl, sl), maxm, maxn);
+	Ve = Vm*0;
+    else
+	% Integral of current over the observation segment due to the
+	% via-induced voltage
+	iivd=calc_iivd(tlm, tl, sl);
+	IIm = Vdm.*reshape(iivd, maxm, maxn);
+	% Via self-impedance needs to be handled separately
+	if tl == sl && si == ti && sj == tj
+	    % In the case of distributed voltage source, the transmission
+	    % line equations are
+	    %  d2I/dz2 - YZI = -YS
+	    %  d2V/dz2 - YZV = 0
+            % Where
+            %  Z is the series impedance per len
+            %  Y is the shunt admittance per len
+            %  S is the voltage source per len
+            % And the solutions are
+            %  V(z)=Vp*exp(-gamma*z) + Vm*exp(gamma*z)
+            %  I(z)=Ip*exp(-gamma*z) + Im*exp(gamma*z)+S/Z
+	    % where
+	    %  gamma = sqrt(YZ) is a propagation constant
+	    %  Vp/Ip = -Vm/Im = sqrt(Z/Y) = Z0 is a characteristic impedance
+	    % But - notice that the solution for I has the constant term S/Z.
+	    % We need to subtract it from the current when evaluating
+	    % the self-impedance!
+	    IIm = IIm - Vdm.*h(sl).*Y0m(:,:,sl)./gamma(:,:,sl);
+	end
+    end
+end
 
 if ttype == 1
     % x-directed testing function
@@ -155,7 +206,10 @@ elseif ttype == 0
     Ze=sum(sum(-Ve.*Ne.*kx.*Gdx_flat.*Gdy_tri.*sin(kx.*xt).*cos(ky.*yt), 2), 1);
     Zm=sum(sum(-Vm.*Nm.*ky.*Gdx_flat.*Gdy_tri.*sin(kx.*xt).*cos(ky.*yt), 2), 1);
 else               
-% via
+    % via
+    m = kc.*kc./(j*freq*weps(tl));
+    Zm = sum(sum(m.*IIm.*Nm.*Gdx_flat.*Gdy_flat.*sin(kx.*xt).*sin(ky.*yt), 2), 1);
+    Ze = 0;
 end
 
 Z=Ze+Zm;
