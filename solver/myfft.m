@@ -1,9 +1,11 @@
-function [ cc ss ] = myfft(f)
-% [ cc ss ] = myfft(f)
+function [ cc ss cs sc ] = myfft(f)
+% [ cc ss cs sc ] = myfft(f)
 %
 % Computes the following sums
 %  cc(k,l) = sum(sum(f(m,n)*cos(2*pi*(k-1)*(m-1)/M)*cos(2*pi*(l-1)*(n-1)/N)))
 %  ss(k,l) = sum(sum(f(m,n)*sin(2*pi*(k-1)*(m-1)/M)*sin(2*pi*(l-1)*(n-1)/N)))
+%  cs(k,l) = sum(sum(f(m,n)*cos(2*pi*(k-1)*(m-1)/M)*sin(2*pi*(l-1)*(n-1)/N)))
+%  sc(k,l) = sum(sum(f(m,n)*sin(2*pi*(k-1)*(m-1)/M)*cos(2*pi*(l-1)*(n-1)/N)))
 % where the summation ranges are m=1..M n=1..N using the FFT.
 %
 % Here is an explanation of how this works
@@ -19,7 +21,11 @@ function [ cc ss ] = myfft(f)
 %   cos(a)*cos(b)=(exp(-j*a)+exp(j*a))*(exp(-j*b)+exp(j*b))/4=
 %            =(exp(j*(-a-b))+exp(j*(-a+b))+exp(j*(a-b))+exp(j*(a+b)))/4
 %   sin(a)*sin(b)=-(exp(-j*a)-exp(j*a))*(exp(-j*b)-exp(j*b))/4=
-%            =(-exp(j*(a+b))+exp(j*(a-b))+exp(j*(-a+b))-exp(j*(a+b)))/4
+%            =(-exp(j*(-a-b))+exp(j*(a-b))+exp(j*(-a+b))-exp(j*(a+b)))/4
+%   cos(a)*sin(b)=(exp(-j*a)+exp(j*a))*(exp(-j*b)-exp(j*b))/(-j*4)=
+%            =(exp(j*(-a-b))-exp(j*(-a+b))+exp(j*(a-b))-exp(j*(a+b)))/(-j*4)
+%   sin(a)*cos(b)=(exp(-j*a)-exp(j*a))*(exp(-j*b)+exp(j*b))/(-j*4)=
+%            =(exp(j*(-a-b))+exp(j*(-a+b))-exp(j*(a-b))-exp(j*(a+b)))/(-j*4)
 %
 % The rest is obvious.
 %
@@ -52,3 +58,5 @@ F11=ifftshift(F11);
 
 cc=(F+F10+F01+F11)./4;
 ss=(-F+F10+F01-F11)./4;
+cs=(F+F10-F01-F11)./(-j*4);
+sc=(F-F10+F01-F11)./(-j*4);
