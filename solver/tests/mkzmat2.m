@@ -1,11 +1,19 @@
-function Z=mkzmat2(wg, mesh)
-% Z=mkzmat2(wg, mesh)
+function Z=mkzmat2(wg, mesh, fcalczmn)
+% Z=mkzmat2(wg, mesh, fcalczmn)
 % Populates the impedance/reactions matrix in a straightforward and slow
 % manner, used for tests.
 %
-% wg     - shiedling parameters, see wgparams
-% mesh   - meshed metal, see mkmesh
+% wg       - shiedling parameters, see wgparams
+% mesh     - meshed metal, see mkmesh
+% fcalczmn - handle of a function which evaluates the element of the
+%            impedance matrix, see calczmn and calczmn2 for examples.
+%            Optional, points to calczmn by default.
 %
+
+% Use calczmn if the caller has not provided some other Zmn evaluation fn.
+if ~exist('fcalczmn')
+    fcalczmn = @calczmn;
+end
 
 % mesh cell sizes
 dx=wg.a/wg.nx;
@@ -60,7 +68,7 @@ for mli = 1:length(mesh.layers)
 		xjm = mlay.xj(m);
 		xin = nlay.xi(n);
 		xjn = nlay.xj(n);
-		z = calczmn(wg, xim, xjm, mpos, 1, xin, xjn, npos, 1);
+		z = fcalczmn(wg, xim, xjm, mpos, 1, xin, xjn, npos, 1);
 		Z(cumbf(mli)+m,cumbf(nli)+n) = z;
 	    end
 	end
@@ -72,7 +80,7 @@ for mli = 1:length(mesh.layers)
 		xjm = mlay.xj(m);
 		yin = nlay.yi(n);
 		yjn = nlay.yj(n);
-		z = calczmn(wg, xim, xjm, mpos, 1, yin, yjn, npos, 0);
+		z = fcalczmn(wg, xim, xjm, mpos, 1, yin, yjn, npos, 0);
 		Z(cumbf(mli)+m,cumbf(nli)+nnx+n) = z;
 	    end
 	end
@@ -84,7 +92,7 @@ for mli = 1:length(mesh.layers)
 		xjm = mlay.xj(m);
 		vin = nlay.vi(n);
 		vjn = nlay.vj(n);
-		z = calczmn(wg, xim, xjm, mpos, 1, vin, vjn, npos, 2);
+		z = fcalczmn(wg, xim, xjm, mpos, 1, vin, vjn, npos, 2);
 		Z(cumbf(mli)+m,cumbf(nli)+nnx+nny+n) = z*viac;
 	    end
 	end
@@ -96,7 +104,7 @@ for mli = 1:length(mesh.layers)
 		yjm = mlay.yj(m);
 		xin = nlay.xi(n);
 		xjn = nlay.xj(n);
-		z = calczmn(wg, yim, yjm, mpos, 0, xin, xjn, npos, 1);
+		z = fcalczmn(wg, yim, yjm, mpos, 0, xin, xjn, npos, 1);
 		Z(cumbf(mli)+nmx+m,cumbf(nli)+n) = z;
 	    end
 	end
@@ -108,7 +116,7 @@ for mli = 1:length(mesh.layers)
 		yjm = mlay.yj(m);
 		yin = nlay.yi(n);
 		yjn = nlay.yj(n);
-		z = calczmn(wg, yim, yjm, mpos, 0, yin, yjn, npos, 0);
+		z = fcalczmn(wg, yim, yjm, mpos, 0, yin, yjn, npos, 0);
 		Z(cumbf(mli)+nmx+m,cumbf(nli)+nnx+n) = z;
 	    end
 	end
@@ -120,7 +128,7 @@ for mli = 1:length(mesh.layers)
 		yjm = mlay.yj(m);
 		vin = nlay.vi(n);
 		vjn = nlay.vj(n);
-		z = calczmn(wg, yim, yjm, mpos, 0, vin, vjn, npos, 2);
+		z = fcalczmn(wg, yim, yjm, mpos, 0, vin, vjn, npos, 2);
 		Z(cumbf(mli)+nmx+m,cumbf(nli)+nnx+nny+n) = z*viac;
 	    end
 	end
@@ -132,7 +140,7 @@ for mli = 1:length(mesh.layers)
 		vjm = mlay.vj(m);
 		xin = nlay.xi(n);
 		xjn = nlay.xj(n);
-		z = calczmn(wg, vim, vjm, mpos, 2, xin, xjn, npos, 1);
+		z = fcalczmn(wg, vim, vjm, mpos, 2, xin, xjn, npos, 1);
 		Z(cumbf(mli)+nmx+nmy+m,cumbf(nli)+n) = z*viac;
 	    end
 	end
@@ -144,7 +152,7 @@ for mli = 1:length(mesh.layers)
 		vjm = mlay.vj(m);
 		yin = nlay.yi(n);
 		yjn = nlay.yj(n);
-		z = calczmn(wg, vim, vjm, mpos, 2, yin, yjn, npos, 0);
+		z = fcalczmn(wg, vim, vjm, mpos, 2, yin, yjn, npos, 0);
 		Z(cumbf(mli)+nmx+nmy+m,cumbf(nli)+nnx+n) = z*viac;
 	    end
 	end
@@ -156,7 +164,7 @@ for mli = 1:length(mesh.layers)
 		vjm = mlay.vj(m);
 		vin = nlay.vi(n);
 		vjn = nlay.vj(n);
-		z = calczmn(wg, vim, vjm, mpos, 2, vin, vjn, npos, 2);
+		z = fcalczmn(wg, vim, vjm, mpos, 2, vin, vjn, npos, 2);
 		Z(cumbf(mli)+nmx+nmy+m,cumbf(nli)+nnx+nny+n) = z*viac*viac;
 	    end
 	end

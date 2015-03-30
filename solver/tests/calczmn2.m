@@ -139,15 +139,24 @@ if stype == 1
 	pxx=(cos(kx.*(xt-xs)).*cos(ky.*(yt-ys))-cos(kx.*(xt-xs)).*cos(ky.*(yt+ys)) ...
 	    +cos(kx.*(xt+xs)).*cos(ky.*(yt-ys))-cos(kx.*(xt+xs)).*cos(ky.*(yt+ys)))./4;
 	Z=sum(sum(Gxx.*pxx, 2), 1);
-    else
+    elseif ttype == 0
 	% y-directed testing function
 	Gyx=Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_tri.*(Ne.*ky.*Ne.*kx./Ye-Nm.*kx.*Nm.*ky./Ym);
 	%pyx=cos(kx.*xs).*sin(ky.*ys).*sin(kx.*xt).*cos(ky.*yt);
-	pyx=(sin(kx.*(xt+xs)).*sin(ky.*(yt+ys))-sin(kx.*(xt+xs)).*sin(ky.*(yt-ys))
+	pyx=(sin(kx.*(xt+xs)).*sin(ky.*(yt+ys))-sin(kx.*(xt+xs)).*sin(ky.*(yt-ys)) ...
              +sin(kx.*(xt-xs)).*sin(ky.*(yt+ys))-sin(kx.*(xt-xs)).*sin(ky.*(yt-ys)))./4;
 	Z=sum(sum(Gyx.*pyx, 2), 1);
+    else
+	% via testing function
+	iii = reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
+	m=kc.*kc./(j*freq*weps(sl));
+	Gvx = Nm.*kx.*Gdx_tri.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*iii;
+	%pvx = cos(kx.*xs).*sin(ky.*ys).*sin(kx.*xt).*sin(ky.*yt);
+	pvx = (sin(kx.*(xs+xt)).*cos(ky.*(ys-yt)) - sin(kx.*(xs+xt)).*cos(ky.*(ys+yt)) ...
+              -sin(kx.*(xs-xt)).*cos(ky.*(ys-yt)) + sin(kx.*(xs-xt)).*cos(ky.*(ys+yt)))./4;
+	Z = sum(sum(Gvx.*pvx, 2), 1);
     end
-else
+elseif stype == 0
     if ttype == 1
 	% x-directed testing function
 	Gxy= Gdx_flat.*Gdy_tri.*Gdx_tri.*Gdy_flat.*(Ne.*kx.*Ne.*ky./Ye-Nm.*ky.*Nm.*kx./Ym);
@@ -155,12 +164,55 @@ else
 	pxy=(-sin(kx.*(xt-xs)).*sin(ky.*(yt+ys))-sin(kx.*(xt-xs)).*sin(ky.*(yt-ys)) ...
 	     +sin(kx.*(xt+xs)).*sin(ky.*(yt+ys))+sin(kx.*(xt+xs)).*sin(ky.*(yt-ys)))./4;
 	Z=sum(sum( Gxy.*pxy, 2), 1);
-    else
+    elseif ttype == 0
 	% y-directed testing function
 	Gyy=Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_tri.*(-Ne.*kx.*Ne.*kx./Ye-Nm.*ky.*Nm.*ky./Ym);
 	%pyy=sin(kx.*xs).*cos(ky.*ys).*sin(kx.*xt).*cos(ky.*yt);
 	pyy=(cos(kx.*(xt-xs)).*cos(ky.*(yt-ys))+cos(kx.*(xt-xs)).*cos(ky.*(yt+ys)) ...
 	    -cos(kx.*(xt+xs)).*cos(ky.*(yt-ys))-cos(kx.*(xt+xs)).*cos(ky.*(yt+ys)))./4;
 	Z=sum(sum(Gyy.*pyy, 2), 1);
+    else
+	% via testing function
+	iii = reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
+	m = kc.*kc./(j*freq*weps(tl));
+	Gvy = Nm.*Gdx_flat.*Gdy_flat.*Nm.*ky.*Gdx_flat.*Gdy_tri.*m.*iii;
+	%pvy = sin(kx.*xs).*cos(ky.*ys).*sin(kx.*xt).*sin(ky.*yt);
+	pvy = (cos(kx.*(xs-xt)).*sin(ky.*(ys+yt)) - cos(kx.*(xs-xt)).*sin(ky.*(ys-yt)) ...
+	      -cos(kx.*(xs+xt)).*sin(ky.*(ys+yt) )+ cos(kx.*(xs+xt)).*sin(ky.*(ys-yt)))./4;
+	Z = sum(sum(Gvy.*pvy, 2), 1);
+    end
+else
+    % via source
+    if ttype == 1
+	% x-directed testing function
+	m = kc.*kc./(j*freq*weps(sl));
+	vvd = reshape(calc_vvd(tlm, z(tl), tl, sl), maxm, maxn);
+	Gxv = -m.*Nm.*Gdx_flat.*Gdy_flat.*Nm.*kx.*Gdx_tri.*Gdy_flat.*vvd;
+	%pxv = cos(kx.*xt).*sin(ky.*yt).*sin(kx.*xs).*sin(ky.*ys);
+	pxv = (sin(kx.*(xt+xs)).*cos(ky.*(yt-ys))-sin(kx.*(xt+xs)).*cos(ky.*(yt+ys))...
+	      -sin(kx.*(xt-xs)).*cos(ky.*(yt-ys))+sin(kx.*(xt-xs)).*cos(ky.*(yt+ys)))./4;
+	Z=sum(sum(Gxv.*pxv, 2), 1);
+    elseif ttype == 0
+	% y-directed testing function
+	m = kc.*kc./(j*freq*weps(sl));
+	vvd = reshape(calc_vvd(tlm, z(tl), tl, sl), maxm, maxn);
+	Gyv = -Nm.*ky.*Gdx_flat.*Gdy_tri.*Nm.*Gdx_flat.*Gdy_flat.*m.*vvd;
+	%pyv = sin(kx.*xs).*sin(ky.*ys).*sin(kx.*xt).*cos(ky.*yt);
+	pyv = (cos(kx.*(xs-xt)).*sin(ky.*(ys+yt)) + cos(kx.*(xs-xt)).*sin(ky.*(ys-yt))...
+	      -cos(kx.*(xs+xt)).*sin(ky.*(ys+yt)) - cos(kx.*(xs+xt)).*sin(ky.*(ys-yt)))./4;
+	Z = sum(sum(Gyv.*pyv, 2), 1);
+    else
+	% via testing function
+	iivd = calc_iivd(tlm, tl, sl);
+	r = reshape(iivd, maxm, maxn);
+	if tl == sl && si == ti && sj == tj
+	   r = r - h(sl).*Y0m(:,:,sl)./gamma(:,:,sl);
+	end
+	m = -kc.^4/(freq*weps(sl)*freq*weps(tl));
+	Gvv = Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*r;
+	%pvv = sin(kx.*xt).*sin(ky.*yt).*sin(kx.*xs).*sin(ky.*ys);
+	pvv = (cos(kx.*(xt-xs)).*cos(ky.*(yt-ys))-cos(kx.*(xt-xs)).*cos(ky.*(yt+ys))...
+	      -cos(kx.*(xt+xs)).*cos(ky.*(yt-ys))+cos(kx.*(xt+xs)).*cos(ky.*(yt+ys)))./4;
+	Z = sum(sum(Gvv.*pvv, 2), 1);
     end
 end
