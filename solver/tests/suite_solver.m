@@ -17,3 +17,5 @@ addTest('test_tlinexy');
 addTest('test_thick');
 addTest('test_coupled');
 addTest('test_fnorm');
+addTest('test_calczmn3');
+addTest('test_calczmn4');
