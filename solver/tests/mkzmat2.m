@@ -24,7 +24,7 @@ dy=wg.b/wg.ny;
 numx = sum(cellfun(@(v) length(v), { mesh.layers(:).xi }));
 numy = sum(cellfun(@(v) length(v), { mesh.layers(:).yi }));
 numv = sum(cellfun(@(v) length(v), { mesh.layers(:).vi }));
-numbf = numx + numy;
+numbf = numx + numy + numv;
 
 % We also compute the cumulative sums of numbers of the basis functions in
 % the layers up to the given one which is then used to place the blocks

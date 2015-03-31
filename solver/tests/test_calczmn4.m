@@ -13,7 +13,7 @@ function test_calczmn4
 nx=8;  % cells along x
 ny=8;  % cells along y
 a=1e-2; % x-size of the waveguide
-b=1e-2; % y-size of the waveguide
+b=2e-2; % y-size of the waveguide - intentionally different from a
 
 % Mesh cell size
 dx = a/nx;
@@ -28,6 +28,7 @@ layh=dx; % thickness of one layer
 % parametes of the enclosure to pass to mkzmat
 h=repmat(layh, 1, nlay);
 wg=wgparams(freq,a,b,h,nx,ny);
+wg.weps = eps0*(1:nlay); % vary the permittivity from layer to layer
 wg.cnx = 4; % to make the things a little faster
 wg.cny = 4;
 %% wg.Gls0 = 0; % no bottom ground

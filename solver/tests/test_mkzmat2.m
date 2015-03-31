@@ -1,9 +1,12 @@
-function test_calczmn3
-% test_calczmn3
+function test_mkzmat2 
+% test_mkzmat2
 %
-% One more test of calczmn2 (sligtly reorganized version of calczmn)
-% Now with vias
-% 
+% Compare mkzmat results against the mkzmat2 which evaluates the sums
+% of the waveguide modes directly instead of using fft
+%
+% This test uses the same geometry as test_calczmn3 - vertical loop
+% in y-z plane
+%
 
 %
 % test geometry - rectangular vertical loop - in y-z plane
@@ -28,8 +31,8 @@ layh=dx; % thickness of one layer
 h=repmat(layh, 1, nlay);
 wg=wgparams(freq,a,b,h,nx,ny);
 wg.weps = eps0*(1:nlay); % vary the permittivity from layer to layer
-wg.cnx = 4; % to make the things a little faster
-wg.cny = 4;
+wg.cnx = 8; % to make the things a little faster
+wg.cny = 8;
 %% wg.Gls0 = 0; % no bottom ground
 %% wg.Ggr0 = 0; % no top ground
 
@@ -68,14 +71,7 @@ layer.vj = [ cj-n2  cj+n2 ];
 layer.pos = nlay/2 + n2;
 mesh.layers(n2*2 + 1) = layer;
 
-%% Z1 = calczmn(wg, 7, 6, 7, 2, 7, 6, 6, 2)
-%% Z2 = calczmn2(wg, 7, 6, 7, 2, 7, 6, 6, 2)
-%% zdiff=Z1-Z2
-%% Z3 = calczmn(wg, 7, 6, 6, 2, 7, 6, 6, 2)
-%% Z4 = calczmn2(wg, 7, 6, 6, 2, 7, 6, 6, 2)
-%% zdiff34=Z3-Z4
-
-Zt=mkzmat2(wg, mesh, @calczmn);
-Z=mkzmat2(wg, mesh, @calczmn2);
+Zt=mkzmat2(wg, mesh);
+Z=mkzmat(wg, mesh);
 
 assertEquals(Zt, Z, 1e-17);

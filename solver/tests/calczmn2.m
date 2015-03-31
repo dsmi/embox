@@ -149,11 +149,11 @@ if stype == 1
     else
 	% via testing function
 	iii = reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
-	m=kc.*kc./(j*freq*weps(sl));
+	m=kc.*kc./(j*freq*weps(tl));
 	Gvx = Nm.*kx.*Gdx_tri.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*iii;
 	%pvx = cos(kx.*xs).*sin(ky.*ys).*sin(kx.*xt).*sin(ky.*yt);
-	pvx = (sin(kx.*(xs+xt)).*cos(ky.*(ys-yt)) - sin(kx.*(xs+xt)).*cos(ky.*(ys+yt)) ...
-              -sin(kx.*(xs-xt)).*cos(ky.*(ys-yt)) + sin(kx.*(xs-xt)).*cos(ky.*(ys+yt)))./4;
+	pvx = (sin(kx.*(xt+xs)).*cos(ky.*(yt-ys)) - sin(kx.*(xt+xs)).*cos(ky.*(yt+ys)) ...
+              +sin(kx.*(xt-xs)).*cos(ky.*(yt-ys)) - sin(kx.*(xt-xs)).*cos(ky.*(yt+ys)))./4;
 	Z = sum(sum(Gvx.*pvx, 2), 1);
     end
 elseif stype == 0
@@ -177,8 +177,8 @@ elseif stype == 0
 	m = kc.*kc./(j*freq*weps(tl));
 	Gvy = Nm.*Gdx_flat.*Gdy_flat.*Nm.*ky.*Gdx_flat.*Gdy_tri.*m.*iii;
 	%pvy = sin(kx.*xs).*cos(ky.*ys).*sin(kx.*xt).*sin(ky.*yt);
-	pvy = (cos(kx.*(xs-xt)).*sin(ky.*(ys+yt)) - cos(kx.*(xs-xt)).*sin(ky.*(ys-yt)) ...
-	      -cos(kx.*(xs+xt)).*sin(ky.*(ys+yt) )+ cos(kx.*(xs+xt)).*sin(ky.*(ys-yt)))./4;
+	pvy = (cos(kx.*(xt-xs)).*sin(ky.*(yt+ys)) + cos(kx.*(xt-xs)).*sin(ky.*(yt-ys)) ...
+	      -cos(kx.*(xt+xs)).*sin(ky.*(yt+ys)) - cos(kx.*(xt+xs)).*sin(ky.*(yt-ys)))./4;
 	Z = sum(sum(Gvy.*pvy, 2), 1);
     end
 else
@@ -198,8 +198,8 @@ else
 	vvd = reshape(calc_vvd(tlm, z(tl), tl, sl), maxm, maxn);
 	Gyv = -Nm.*ky.*Gdx_flat.*Gdy_tri.*Nm.*Gdx_flat.*Gdy_flat.*m.*vvd;
 	%pyv = sin(kx.*xs).*sin(ky.*ys).*sin(kx.*xt).*cos(ky.*yt);
-	pyv = (cos(kx.*(xs-xt)).*sin(ky.*(ys+yt)) + cos(kx.*(xs-xt)).*sin(ky.*(ys-yt))...
-	      -cos(kx.*(xs+xt)).*sin(ky.*(ys+yt)) - cos(kx.*(xs+xt)).*sin(ky.*(ys-yt)))./4;
+	pyv = (cos(kx.*(xt-xs)).*sin(ky.*(yt+ys)) - cos(kx.*(xt-xs)).*sin(ky.*(yt-ys))...
+	      -cos(kx.*(xt+xs)).*sin(ky.*(yt+ys)) + cos(kx.*(xt+xs)).*sin(ky.*(yt-ys)))./4;
 	Z = sum(sum(Gyv.*pyv, 2), 1);
     else
 	% via testing function

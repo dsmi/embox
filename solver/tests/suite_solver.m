@@ -19,3 +19,5 @@ addTest('test_coupled');
 addTest('test_fnorm');
 addTest('test_calczmn3');
 addTest('test_calczmn4');
+addTest('test_mkzmat2');
+addTest('test_mkzmat3');
