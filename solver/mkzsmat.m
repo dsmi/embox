@@ -17,14 +17,16 @@ function Z=mkzsmat(wg, mesh)
 % To calculate the size we need to count the basis functions on all layers.
 numx = sum(cellfun(@(v) length(v), { mesh.layers(:).xi }));
 numy = sum(cellfun(@(v) length(v), { mesh.layers(:).yi }));
-numbf = numx + numy;
+numv = sum(cellfun(@(v) length(v), { mesh.layers(:).vi }));
+numbf = numx + numy + numv;
 
 % We also compute the cumulative sums of numbers of the basis functions in
 % the layers up to the given one which is then used to place the blocks
 % of the matrix (see below)
 cumx = cumsum(cellfun(@(v) length(v), { mesh.layers(:).xi }));
 cumy = cumsum(cellfun(@(v) length(v), { mesh.layers(:).yi }));
-cumbf = [ 0 (cumx + cumy) ];
+cumv = cumsum(cellfun(@(v) length(v), { mesh.layers(:).vi }));
+cumbf = [ 0 (cumx + cumy + cumv) ];
 
 % Pre-allocate it!
 Z = zeros(numbf);
@@ -60,7 +62,12 @@ for lidx = 1:length(mesh.layers)
     % compose the entire matrix block for this pair of layers
     Zxy = zeros(size(Zxx,1), size(Zyy,2));
     Zyx = zeros(size(Zyy,1), size(Zxx,2));
-    Zl = [ Zxx Zxy ; Zyx Zyy ];
+    Zxv = zeros(numx(lidx), numv(lidx));
+    Zyv = zeros(numy(lidx), numv(lidx));
+    Zvx = zeros(numv(lidx), numx(lidx));
+    Zvy = zeros(numv(lidx), numy(lidx));
+    Zvv = zeros(numv(lidx), numv(lidx)); % vias are ideal conductors now
+    Zl = [ Zxx Zxy Zxv ; Zyx Zyy Zyv ; Zvx Zvy Zvv ];
 
     if isfield(layer, 'conductivity')
 	% If the conductivity is defined
