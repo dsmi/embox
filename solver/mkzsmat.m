@@ -62,11 +62,11 @@ for lidx = 1:length(mesh.layers)
     % compose the entire matrix block for this pair of layers
     Zxy = zeros(size(Zxx,1), size(Zyy,2));
     Zyx = zeros(size(Zyy,1), size(Zxx,2));
-    Zxv = zeros(numx(lidx), numv(lidx));
-    Zyv = zeros(numy(lidx), numv(lidx));
-    Zvx = zeros(numv(lidx), numx(lidx));
-    Zvy = zeros(numv(lidx), numy(lidx));
-    Zvv = zeros(numv(lidx), numv(lidx)); % vias are ideal conductors now
+    Zxv = zeros(length(layer.xi), length(layer.vi));
+    Zyv = zeros(length(layer.yi), length(layer.vi));
+    Zvx = zeros(length(layer.vi), length(layer.xi));
+    Zvy = zeros(length(layer.vi), length(layer.yi));
+    Zvv = zeros(length(layer.vi), length(layer.vi)); % vias are ideal conductors
     Zl = [ Zxx Zxy Zxv ; Zyx Zyy Zyv ; Zvx Zvy Zvv ];
 
     if isfield(layer, 'conductivity')

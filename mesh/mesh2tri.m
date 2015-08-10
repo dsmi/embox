@@ -1,5 +1,5 @@
-function [ Tri, X, Y, Z ] = mesh2tri(wg, mesh)
-% [ Tri, X, Y, Z ] = mesh2tri(wg, mesh)
+function [ Tri, X, Y, Z, C ] = mesh2tri(wg, mesh, I)
+% [ Tri, X, Y, Z, C ] = mesh2tri(wg, mesh, I)
 % 'Triangulates' mesh so it can be drawn with trisurf/trimesh
 %
 % wg     - shiedling parameters, see wgparams
@@ -13,19 +13,47 @@ dy = wg.b/wg.ny;
 % z coordinate of the layers
 lz = [ 0 cumsum(wg.h) ];
 
+% Cumulative sums of numbers of the basis functions in the layers up to
+% the given one which is then used to find currents in the vector
+cumx = cumsum(cellfun(@(v) length(v), { mesh.layers(:).xi }));
+cumy = cumsum(cellfun(@(v) length(v), { mesh.layers(:).yi }));
+cumv = cumsum(cellfun(@(v) length(v), { mesh.layers(:).vi }));
+cumbf = [ 0 (cumx + cumy + cumv) ];
+
+
 xyz = [];
 Tri = [];
+C = [];
 
 for lidx = 1:length(mesh.layers)
 
     lay = mesh.layers(lidx);
-    B=zeros(wg.nx+2,wg.ny+2);
+    B = zeros(wg.nx+2,wg.ny+2);
 
-    % populate bitmap - ones corresponds to basis functions
-    B(sub2ind(size(B), lay.xi+1,lay.xj+2)) = 1;
-    B(sub2ind(size(B), lay.xi+2,lay.xj+2)) = 1;
-    B(sub2ind(size(B), lay.yi+2,lay.yj+1)) = 1;
-    B(sub2ind(size(B), lay.yi+2,lay.yj+2)) = 1;
+    % currents of this layer
+    Il = I(cumbf(lidx)+1:cumbf(lidx+1));
+
+    % horizontal currents
+    ix = zeros(wg.nx+2,wg.ny+2);
+    iy = zeros(wg.nx+2,wg.ny+2);
+
+    % indices of the basis functions in B, ix and iy
+    xind1 = sub2ind(size(B), lay.xi+1,lay.xj+2);
+    xind2 = sub2ind(size(B), lay.xi+2,lay.xj+2);
+    yind1 = sub2ind(size(B), lay.yi+2,lay.yj+1);
+    yind2 = sub2ind(size(B), lay.yi+2,lay.yj+2);
+
+    % populate bitmap - ones correspond to basis functions
+    B(xind1) = 1;
+    B(xind2) = 1;
+    B(yind1) = 1;
+    B(yind2) = 1;
+
+    % calculate currents
+    ix(xind1) = ix(xind1) + Il(1:length(xind1)).' ./ dx;
+    ix(xind2) = ix(xind2) + Il(1:length(xind1)).' ./ dx;
+    iy(yind1) = iy(yind1) + Il(length(xind1)+1:length(xind1)+length(yind1)).' ./ dy;
+    iy(yind2) = iy(yind2) + Il(length(xind1)+1:length(xind1)+length(yind1)).' ./ dy;
 
     % find nonzero pixels in B, and generate verices
     [ ii, jj ] = find(B);
@@ -33,6 +61,10 @@ for lidx = 1:length(mesh.layers)
     iijj = [ kron(ii, ones(4,1)) , kron(jj, ones(4,1)) ];
     dxdy = repmat([ dx dy ], nr*4, 1);
     xy = (iijj + repmat([ 0 0 ; 0 1 ; 1 1 ; 1 0 ], nr, 1)).*dxdy;
+
+    % magnitute of the current at t=0
+    im = sqrt(real(ix).^2 + real(iy).^2);
+    color = im(sub2ind(size(B), ii, jj));
 
     % and then triangles
     voffs = repmat(kron((0:4:(nr*4-4))', ones(2,1)), 1, 3); % vertex index offsets
@@ -42,6 +74,7 @@ for lidx = 1:length(mesh.layers)
     if numel(xy)
 	Tri = [ Tri ; T + size(xyz,1) ];
 	xyz = [ xyz ; [ xy xy(:,1)*0 + lz(lay.pos + 1) ] ];
+	C   = [ C   ; kron(color, ones(4,1)) ];
     end
 
     % now the vias in this layer
@@ -70,6 +103,9 @@ for lidx = 1:length(mesh.layers)
     if numel(xy)
     	Tri = [ Tri ; T + size(xyz,1) ];
     	xyz = [ xyz ; [ xy z ] ];
+	size(C)
+	size(xyz(:,1)*0)
+	C   = [ C   ; xyz(:,1)*0 ]; % ignored now
     end
 
 end

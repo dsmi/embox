@@ -46,6 +46,6 @@ for lidx = 1:length(mesh.layers)
 
     end
 	
-    onprev = onprev + length(layer.xi) + length(layer.yi);
+    onprev = onprev + length(layer.xi) + length(layer.yi) + length(layer.vi);
 
 end
