@@ -27,7 +27,13 @@ yi = yi(:);
 yj = yj(:);
 
 layer = struct('xi', xi, 'xj', xj, 'yi', yi, 'yj', yj);
-layer.conductivity = ccopper; % like it is make of copper
+
+% empty fields for the via
+layer.vi = ones(0,1);
+layer.vj = ones(0,1);
+
+% like it is make of copper
+layer.conductivity = ccopper;
 
 mesh=mkmesh(layer, 1);
 
