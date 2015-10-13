@@ -2,7 +2,7 @@
 % by two or more metal layers, deembedded by simulating line of length L
 % and then 2L
 
-addpath(genpath([ pwd, '/../..' ]));
+addpath(genpath([ pwd, '/..' ]));
 
 function [ Y I wg mesh ]=simline(freq, nx, ny, a, b, h, weps, w, nl)
 
