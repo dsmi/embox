@@ -7,7 +7,7 @@ function B=drawline(B0, x0, y0, x1, y1, th)
 % Inputs:
 %    B0        - source bitmap
 %    y0, y0    - starting point
-%    y0, y0    - ending point
+%    y1, y1    - ending point
 %    th        - thickness of the line
 % Outputs:
 %    B         - bitmap with the line drawn
