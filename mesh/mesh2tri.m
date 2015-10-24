@@ -103,8 +103,6 @@ for lidx = 1:length(mesh.layers)
     if numel(xy)
     	Tri = [ Tri ; T + size(xyz,1) ];
     	xyz = [ xyz ; [ xy z ] ];
-	size(C)
-	size(xyz(:,1)*0)
 	C   = [ C   ; xyz(:,1)*0 ]; % ignored now
     end
 
