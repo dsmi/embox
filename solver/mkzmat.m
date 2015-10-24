@@ -367,6 +367,13 @@ for mli = 1:length(mesh.layers)
 	m = -kc.^4/(freq*weps(npos)*freq*weps(mpos));
 	iivd = calc_iivd(tlm, mpos, npos);
 	r = reshape(iivd, maxm, maxn);
+
+	% if source and testing vias are on the same layer - see calczmn for
+        % some additional details on same-layer calculations for the vias
+	if mpos == npos
+	   r = r - h(npos).*Y0m(:,:,npos)./gamma(:,:,npos);
+        end
+
 	Gvv = Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*r;
 
 	[ cc, ss, cs, sc ] = myfft(Gvv);
@@ -393,25 +400,6 @@ for mli = 1:length(mesh.layers)
 
 	Zvv = viac * viac * ...
 	     (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
-
-	% self-impedances of the via terms need to be calculated separately
-	if mpos == npos
-	   % See calczmn for some details on calculating the via self-impedance
-	   r = r - h(npos).*Y0m(:,:,npos)./gamma(:,:,npos);
-	   Gvv = Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*r;
-
-	   [ cc, ss, cs, sc ] = myfft(Gvv);
-
-	   % All the indices - idif_jdif and others - are already calculated
-	   % above, here we reuse them
-	   Zvv_self = viac * viac * ...
-		(cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
-
-	   % Now just copy diagonal elements from Zvv_self to Zvv
-	   isdiag = logical(eye(size(Zvv)));
-	   Zvv(isdiag) = Zvv_self(isdiag);
-
-	end
 	
 	% compose the entire matrix block for this pair of layers
 	Zl = [ Zxx Zxy Zxv ; Zyx Zyy Zyv ; Zvx Zvy Zvv ];

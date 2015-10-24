@@ -42,3 +42,26 @@ assertEquals(20, length(layer.xi));
 assertEquals(20, length(layer.xj));
 assertEquals(20, length(layer.yi));
 assertEquals(20, length(layer.yj));
+
+% one via in the left-bottom (0, 0) corner
+B0=zeros(8,8);
+B=zeros(8,8);
+
+B(2,2)=1;
+
+layer=mklayer(B0, B);
+
+assertEquals(0, layer.vi);
+assertEquals(0, layer.vj);
+
+% some vias
+B0=zeros(8,8);
+B=zeros(8,8);
+
+B(2:3,2:4)=1;
+
+layer=mklayer(B0, B);
+
+vivj=layer.vi*10+layer.vj;
+vivjt = [ 0 ; 1 ; 2 ; 10 ; 11 ; 12 ];
+assertEquals(sort(vivjt), sort(vivj));

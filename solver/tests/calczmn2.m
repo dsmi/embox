@@ -205,7 +205,7 @@ else
 	% via testing function
 	iivd = calc_iivd(tlm, tl, sl);
 	r = reshape(iivd, maxm, maxn);
-	if tl == sl && si == ti && sj == tj
+	if tl == sl
 	   r = r - h(sl).*Y0m(:,:,sl)./gamma(:,:,sl);
 	end
 	m = -kc.^4/(freq*weps(sl)*freq*weps(tl));

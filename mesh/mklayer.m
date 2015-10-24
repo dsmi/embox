@@ -1,5 +1,5 @@
-function layer = mklayer(B)
-% layer = mklayer(B)
+function layer = mklayer(B, BV)
+% layer = mklayer(B, BV)
 %
 % Creates a vertical/flat mesh representing a layer of metallization.
 % Given a bitmap representing the metal shape (recall that we use the
@@ -11,8 +11,13 @@ function layer = mklayer(B)
 %   xi, xj - in-grid coordinates of the x-directed basis functions
 %   yi, yj - in-grid coordinates of the y-directed basis functions
 % In addition the layer may contain vias, which are the connections between
-% this layer and the next one. This function does not create vias, but they
-% can be added by other means. The corresponding fields are:
+% this layer and the next one. If this function is given the second bitmap
+% BV it creates vias from it. Although the vias can not penetrate the boundary
+% and therefore the vias bitmap should be two pixels less in both X- and Y-
+% dimensions, for the caller convenience this function expects both B and BV
+% bitmaps to be of the same size and crops the BV by cuttint one pixel wide
+% strips from each side.
+% The corresponding fields of the resulting layer struct are:
 %   vi, vj - in-grid coordinates of the via basis functions
 % Each basis function is represented by coordinates of its supporting point,
 % see drawing below where the supporting point is marked by 'o'
@@ -34,9 +39,16 @@ By = B+[ B(:,2:end)  zeros(size(B, 1), 1) ];
 
 layer=struct('xi', xi-1, 'xj', xj-1, 'yi', yi-1, 'yj', yj-1);
 
-% empty fields for the via
-layer.vi = ones(0,1);
-layer.vj = ones(0,1);
+if exist('BV')
+    % strip edges - not needed for the vias
+    [ vi, vj ] = find(BV(2:end-1, 2:end-1) > 0.5);
+    layer.vi = vi - 1;
+    layer.vj = vj - 1;
+else
+    % empty fields for the via
+    layer.vi = ones(0,1);
+    layer.vj = ones(0,1);
+end
 
 % Made of copper by default
 layer.conductivity = ccopper;

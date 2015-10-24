@@ -174,7 +174,7 @@ else
 	iivd=calc_iivd(tlm, tl, sl);
 	IIm = Vdm.*reshape(iivd, maxm, maxn);
 	% Via self-impedance needs to be handled separately
-	if tl == sl && si == ti && sj == tj
+	if tl == sl
 	    % In the case of distributed voltage source, the transmission
 	    % line equations are
 	    %  d2I/dz2 - YZI = -YS
