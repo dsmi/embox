@@ -20,7 +20,6 @@ cumy = cumsum(cellfun(@(v) length(v), { mesh.layers(:).yi }));
 cumv = cumsum(cellfun(@(v) length(v), { mesh.layers(:).vi }));
 cumbf = [ 0 (cumx + cumy + cumv) ];
 
-
 xyz = [];
 Tri = [];
 C = [];
@@ -60,7 +59,8 @@ for lidx = 1:length(mesh.layers)
     nr = length(ii); % number of rectangles
     iijj = [ kron(ii, ones(4,1)) , kron(jj, ones(4,1)) ];
     dxdy = repmat([ dx dy ], nr*4, 1);
-    xy = (iijj + repmat([ 0 0 ; 0 1 ; 1 1 ; 1 0 ], nr, 1)).*dxdy;
+    % 2 subtracted to get coordinates in ranges [ -dx a+dx ] [ -dy a+dy ] 
+    xy = (iijj + repmat([ 0 0 ; 0 1 ; 1 1 ; 1 0 ] - 2, nr, 1)).*dxdy;
 
     % magnitute of the current at t=0
     im = sqrt(real(ix).^2 + real(iy).^2);
@@ -86,7 +86,8 @@ for lidx = 1:length(mesh.layers)
     [ ii, jj ] = find(B);
     nr = length(ii); % number of rectangles
     iijj = [ kron(ii, ones(8,1)) , kron(jj, ones(8,1)) ];
-    vivj = iijj + repmat([ 0 0 ; 0 1 ; 1 1 ; 1 0 ], nr*2, 1);
+    % 2 subtracted to get coordinates in ranges [ -dx a+dx ] [ -dy a+dy ] 
+    vivj = iijj + repmat([ 0 0 ; 0 1 ; 1 1 ; 1 0 ] - 2, nr*2, 1);
     dxdy = repmat([ dx dy ], nr*8, 1);
     xy = vivj.*dxdy;
     z1 = lz(lay.pos);
