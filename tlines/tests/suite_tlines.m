@@ -12,3 +12,4 @@ addTest('test_tlines_iii');
 addTest('test_tlines_iivd');
 addTest('test_tlines_2');
 addTest('test_tlines_3');
+addTest('test_tlines_vvl');
