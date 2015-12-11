@@ -16,14 +16,14 @@ if iobs<jsrc,
 	% Next, find voltage at the right terminal of the observation tline
 	vt = vt.*prod(tl.Tls(:,iobs+1:jsrc-1),2);
 	% Finally, find current at the observation point
-	i = vt.*calc_ii_vterm(tl,iobs);
+	i = vt.*calc_ii_vterm(tl,iobs,0,1);
 else if iobs>jsrc,
 	% Find voltage at the right terminal of the source tline
 	vt = calc_vvd(tl,tl.z(:,jsrc+1),jsrc,jsrc);
 	% Next, find voltage at the left terminal of the observation tline
 	vt = vt.*prod(tl.Tgr(:,jsrc+1:iobs-1),2);
 	% Finally, find voltage at the observation point
-	i = vt.*calc_ii_vleft(tl,iobs);
+	i = vt.*calc_ii_vleft(tl,iobs,0,1);
 else
 	n = iobs;
 	k = tl.k(:,n);

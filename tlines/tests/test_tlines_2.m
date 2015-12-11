@@ -62,8 +62,6 @@ GgrN=0;
 % Run the coefficients precomputation
 tl = calc_tlines(z, Z0, k, Gls1, GgrN);
 
-iobs=2;
-jsrc=1;
 for iobs=1:3
     for jsrc=1:3
 	zsrc=tl.z(1,jsrc)+tl.d(1,jsrc)*0.6;
@@ -74,7 +72,7 @@ for iobs=1:3
 	for i=1:n
 	    test_ii = test_ii + calc_ii(tl, zi(i), iobs, zsrc, jsrc)*dl;
 	end
-	ii = calc_iii(tl, iobs, zsrc, jsrc);
+	ii = calc_iii(tl, iobs, 0, 1, zsrc, jsrc);
 	tol = 1e-14+max(abs(ii))*5e-4;
 	assertEquals(test_ii, ii, tol);
       end

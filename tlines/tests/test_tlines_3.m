@@ -17,7 +17,7 @@ ltest = 2;
 vl    = 2;             % layer
 ivd   = calc_ivd(tl, ztest, ltest, vl);
 vvd   = calc_vvd(tl, ztest, ltest, vl);
-iii   = calc_iii(tl, vl, ztest, ltest);
+iii   = calc_iii(tl, vl, 0, 1, ztest, ltest);
 
 assertEquals(vvd,-iii,1e-25); % by reciprocity
 

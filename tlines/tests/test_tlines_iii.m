@@ -29,15 +29,20 @@ GgrN=0;
 % Run the coefficients precomputation
 tl = calc_tlines(tl_z, Z0, tl_k, Gls1, GgrN);
 
+% integral multiplier coefficients a*z + b
+a = 4.4;
+b = -2;
+
 for iobs=1:5
     for jsrc=1:5
 	n=100000;
 	dl=tl.d(iobs)/n;
-	zi=linspace(tl.z(iobs), tl.z(iobs+1), n);
+	zi=linspace(tl.z(iobs)+dl/2, tl.z(iobs+1)-dl/2, n);
 	zsrc=tl_z(jsrc)+len(jsrc)*0.6;
-	test_ii = sum(calc_ii(tl, zi, iobs, zsrc, jsrc))*dl;
-	ii = calc_iii(tl, iobs, zsrc, jsrc);
-	tol = 1e-14+abs(i)*1e-9;
+        lm = (zi-tl.z(iobs))*a + b;
+	test_ii = sum(calc_ii(tl, zi, iobs, zsrc, jsrc).*lm)*dl;
+	ii = calc_iii(tl, iobs, a, b, zsrc, jsrc);
+	tol = 1e-14;
 	assertEquals(test_ii, ii, tol);
     end
 end

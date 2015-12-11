@@ -54,5 +54,3 @@ z = zobs-tl.z(:,iobs);
 
 % Finally the current at the observation
 i = Ip.*exp(-k.*z) + Im.*exp(k.*z) + lsrc*self.*z./Z;
-
-
