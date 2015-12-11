@@ -161,7 +161,7 @@ if stype == 0 || stype == 1
     else
 	% The case when the testing function is via - we need to
 	% find the integral of the current over the target layer
-	IIm = Im.*reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
+	IIm = Im.*reshape(calc_iii(tlm, tl, 0, 1, z(sl), sl), maxm, maxn);
     end
 else
     if ttype == 0 || ttype == 1 

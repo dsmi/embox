@@ -182,7 +182,7 @@ if (stype == 0 || stype == 1) && (ttype == 0 || ttype == 1)
 elseif (stype == 0 || stype == 1) && (ttype == 2)
 
     % Integral of the current over the via layer
-    IIm = Im.*reshape(calc_iii(tlm, tl, z(sl + 1), sl), maxm, maxn);
+    IIm = Im.*reshape(calc_iii(tlm, tl, 0, 1, z(sl + 1), sl), maxm, maxn);
 
     % Mode voltages at the top of the via
     Ve_top = Ie.*reshape(calc_vi(tle, z(tl+1), tl, z(sl+1), sl), maxm, maxn);
@@ -241,11 +241,11 @@ else
 
     % Integral over the vertical part of the observation via due to the bottom
     % part of the source via
-    IIm = IIm + Im.*reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
+    IIm = IIm + Im.*reshape(calc_iii(tlm, tl, 0, 1, z(sl), sl), maxm, maxn);
 
     % Integral over the vertical part of the observation via due to the top part
     % of the source - notice sign (top is 'in') and z(sl+1)
-    IIm = IIm - Im.*reshape(calc_iii(tlm, tl, z(sl+1), sl), maxm, maxn);
+    IIm = IIm - Im.*reshape(calc_iii(tlm, tl, 0, 1, z(sl+1), sl), maxm, maxn);
 
     % source: vertical, observation: bottom
     Vm_bottom =           Vdm.*reshape(calc_vvd(tlm, z(tl), tl,        sl), maxm, maxn);

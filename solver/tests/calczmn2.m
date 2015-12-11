@@ -148,7 +148,7 @@ if stype == 1
 	Z=sum(sum(Gyx.*pyx, 2), 1);
     else
 	% via testing function
-	iii = reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
+	iii = reshape(calc_iii(tlm, tl, 0, 1, z(sl), sl), maxm, maxn);
 	m=kc.*kc./(j*freq*weps(tl));
 	Gvx = Nm.*kx.*Gdx_tri.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*iii;
 	%pvx = cos(kx.*xs).*sin(ky.*ys).*sin(kx.*xt).*sin(ky.*yt);
@@ -173,7 +173,7 @@ elseif stype == 0
 	Z=sum(sum(Gyy.*pyy, 2), 1);
     else
 	% via testing function
-	iii = reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
+	iii = reshape(calc_iii(tlm, tl, 0, 1, z(sl), sl), maxm, maxn);
 	m = kc.*kc./(j*freq*weps(tl));
 	Gvy = Nm.*Gdx_flat.*Gdy_flat.*Nm.*ky.*Gdx_flat.*Gdy_tri.*m.*iii;
 	%pvy = sin(kx.*xs).*cos(ky.*ys).*sin(kx.*xt).*sin(ky.*yt);

@@ -195,7 +195,7 @@ for mli = 1:length(mesh.layers)
 	Zyx = (ss(isum_jsum) - ss(isum_jdif) + ss(idif_jsum) - ss(idif_jdif)) ./ 4;
 
 	% z-directed (via) testing, x-directed source
-	iii = reshape(calc_iii(tlm, mpos, z(npos), npos), maxm, maxn);
+	iii = reshape(calc_iii(tlm, mpos, 0, 1, z(npos), npos), maxm, maxn);
 	m = kc.*kc./(j*freq*weps(mpos));
 	Gvx = Nm.*kx.*Gdx_tri.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*iii;
 
@@ -275,7 +275,7 @@ for mli = 1:length(mesh.layers)
 	Zyy = (cc(idif_jdif) + cc(idif_jsum) - cc(isum_jdif) - cc(isum_jsum)) ./ 4;
 
 	% z-directed (via) testing, y-directed source
-	iii = reshape(calc_iii(tlm, mpos, z(npos), npos), maxm, maxn);
+	iii = reshape(calc_iii(tlm, mpos, 0, 1, z(npos), npos), maxm, maxn);
 	m = kc.*kc./(j*freq*weps(mpos));
 	Gvy = Nm.*ky.*Nm.*Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_flat.*m.*iii;
 
