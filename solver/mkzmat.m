@@ -365,14 +365,9 @@ for mli = 1:length(mesh.layers)
 
 	% z-directed testing, z-directed (via) source
 	m = -kc.^4/(freq*weps(npos)*freq*weps(mpos));
-	iivd = calc_iivd(tlm, mpos, npos);
+        % Notice that we drop non-exponential term from the current integral
+	iivd = calc_iivd(tlm, mpos, 0, 1, 0, npos);
 	r = reshape(iivd, maxm, maxn);
-
-	% if source and testing vias are on the same layer - see calczmn for
-        % some additional details on same-layer calculations for the vias
-	if mpos == npos
-	   r = r - h(npos).*Y0m(:,:,npos)./gamma(:,:,npos);
-        end
 
 	Gvv = Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*r;
 

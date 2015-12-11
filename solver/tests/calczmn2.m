@@ -203,11 +203,8 @@ else
 	Z = sum(sum(Gyv.*pyv, 2), 1);
     else
 	% via testing function
-	iivd = calc_iivd(tlm, tl, sl);
+	iivd = calc_iivd(tlm, tl, 0, 1, 0, sl);
 	r = reshape(iivd, maxm, maxn);
-	if tl == sl
-	   r = r - h(sl).*Y0m(:,:,sl)./gamma(:,:,sl);
-	end
 	m = -kc.^4/(freq*weps(sl)*freq*weps(tl));
 	Gvv = Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*r;
 	%pvv = sin(kx.*xt).*sin(ky.*yt).*sin(kx.*xs).*sin(ky.*ys);

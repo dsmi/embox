@@ -214,30 +214,10 @@ else
 % via-to-via!, we need to calculate V(e/m)_(top/bottom) and IIm
 
     % Integral of current over the observation segment due to the
-    % via-induced voltage
-    iivd = calc_iivd(tlm, tl, sl);
+    % via-induced voltage. Notice that we drop non-exponential term from
+    % the current integral (by passing c=0)
+    iivd = calc_iivd(tlm, tl, 0, 1, 0, sl);
     IIm = Vdm.*reshape(iivd, maxm, maxn);
-    % Via self-impedance needs to be handled separately
-    if tl == sl
-	% In the case of distributed voltage source, the transmission
-	% line equations are
-	%  d2I/dz2 - YZI = -YS
-	%  d2V/dz2 - YZV = 0
-        % Where
-        %  Z is the series impedance per len
-        %  Y is the shunt admittance per len
-        %  S is the voltage source per len
-        % And the solutions are
-        %  V(z)=Vp*exp(-gamma*z) + Vm*exp(gamma*z)
-        %  I(z)=Ip*exp(-gamma*z) + Im*exp(gamma*z)+S/Z
-	% where
-	%  gamma = sqrt(YZ) is a propagation constant
-	%  Vp/Ip = -Vm/Im = sqrt(Z/Y) = Z0 is a characteristic impedance
-	% But - notice that the solution for I has the constant term S/Z.
-	% We need to subtract it from the current when evaluating
-	% the self-impedance!
-	IIm = IIm - Vdm.*h(sl).*Y0m(:,:,sl)./gamma(:,:,sl);
-    end
 
     % Integral over the vertical part of the observation via due to the bottom
     % part of the source via
