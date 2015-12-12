@@ -148,52 +148,61 @@ Ym = 0;
 Ve = 0;
 Vm = 0;
 
-if stype == 0 || stype == 1 
-    if ttype == 0 || ttype == 1 
-	% Use the tlines calculator to find the admittance between source and
-	% observation points in the equivalent transmission lines
-	Ye = 1./reshape(calc_vi(tle, z(tl), tl, z(sl), sl), maxm, maxn);
-	Ym = 1./reshape(calc_vi(tlm, z(tl), tl, z(sl), sl), maxm, maxn);
+% horizontal-to-horizontal
+if (stype == 0 || stype == 1) && (ttype == 0 || ttype == 1)
 
-	% Now find mode voltages from the mode currents
-	Ve = Ie./Ye;
-	Vm = Im./Ym;
-    else
-	% The case when the testing function is via - we need to
-	% find the integral of the current over the target layer
-	IIm = Im.*reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
-    end
+    % Use the tlines calculator to find the admittance between source and
+    % observation points in the equivalent transmission lines
+    Ye = 1./reshape(calc_vi(tle, z(tl), tl, z(sl), sl), maxm, maxn);
+    Ym = 1./reshape(calc_vi(tlm, z(tl), tl, z(sl), sl), maxm, maxn);
+
+    % Now find mode voltages from the mode currents
+    Ve = Ie./Ye;
+    Vm = Im./Ym;
+
+% horizontal-to-via
+elseif (stype == 0 || stype == 1) && (ttype == 2)
+
+    % Integral of the current over the via layer
+    IIm = Im.*reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
+
+% via-to-horizontal
+elseif (stype == 2) && (ttype == 0 || ttype == 1)
+
+    % Modal V at the observation due to the via distributed source
+    vvd = calc_vvd(tlm, z(tl), tl, sl);
+    Vm = Vdm.*reshape(vvd, maxm, maxn);
+    Ve = Vm*0;
+
 else
-    if ttype == 0 || ttype == 1 
-	% Shift the via-induced voltage to the observation segment position
-	Vm = Vdm.*reshape(calc_vvd(tlm, z(tl), tl, sl), maxm, maxn);
-	Ve = Vm*0;
-    else
-	% Integral of current over the observation segment due to the
-	% via-induced voltage
-	iivd=calc_iivd(tlm, tl, sl);
-	IIm = Vdm.*reshape(iivd, maxm, maxn);
-	% Via self-impedance needs to be handled separately
-	if tl == sl
-	    % In the case of distributed voltage source, the transmission
-	    % line equations are
-	    %  d2I/dz2 - YZI = -YS
-	    %  d2V/dz2 - YZV = 0
-            % Where
-            %  Z is the series impedance per len
-            %  Y is the shunt admittance per len
-            %  S is the voltage source per len
-            % And the solutions are
-            %  V(z)=Vp*exp(-gamma*z) + Vm*exp(gamma*z)
-            %  I(z)=Ip*exp(-gamma*z) + Im*exp(gamma*z)+S/Z
-	    % where
-	    %  gamma = sqrt(YZ) is a propagation constant
-	    %  Vp/Ip = -Vm/Im = sqrt(Z/Y) = Z0 is a characteristic impedance
-	    % But - notice that the solution for I has the constant term S/Z.
-	    % We need to subtract it from the current when evaluating
-	    % the self-impedance!
-	    IIm = IIm - Vdm.*h(sl).*Y0m(:,:,sl)./gamma(:,:,sl);
-	end
+% via-to-via
+
+    % Integral of current over the observation segment due to the
+    % via-induced voltage. Notice that we drop non-exponential term from
+    % the current integral (by passing c=0)
+    iivd = calc_iivd(tlm, tl, sl);
+    IIm = Vdm.*reshape(iivd, maxm, maxn);
+
+    % Via self-impedance needs to be handled separately
+    if tl == sl
+	% In the case of distributed voltage source, the transmission
+	% line equations are
+	%  d2I/dz2 - YZI = -YS
+	%  d2V/dz2 - YZV = 0
+        % Where
+        %  Z is the series impedance per len
+        %  Y is the shunt admittance per len
+        %  S is the voltage source per len
+        % And the solutions are
+        %  V(z)=Vp*exp(-gamma*z) + Vm*exp(gamma*z)
+        %  I(z)=Ip*exp(-gamma*z) + Im*exp(gamma*z)+S/Z
+	% where
+	%  gamma = sqrt(YZ) is a propagation constant
+	%  Vp/Ip = -Vm/Im = sqrt(Z/Y) = Z0 is a characteristic impedance
+	% But - notice that the solution for I has the constant term S/Z.
+	% We need to subtract it from the current when evaluating
+	% the self-impedance!
+	IIm = IIm - Vdm.*h(sl).*Y0m(:,:,sl)./gamma(:,:,sl);
     end
 end
 
