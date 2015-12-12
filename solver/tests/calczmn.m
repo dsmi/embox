@@ -148,33 +148,41 @@ Ym = 0;
 Ve = 0;
 Vm = 0;
 
-if stype == 0 || stype == 1 
-    if ttype == 0 || ttype == 1 
-	% Use the tlines calculator to find the admittance between source and
-	% observation points in the equivalent transmission lines
-	Ye = 1./reshape(calc_vi(tle, z(tl), tl, z(sl), sl), maxm, maxn);
-	Ym = 1./reshape(calc_vi(tlm, z(tl), tl, z(sl), sl), maxm, maxn);
+% horizontal-to-horizontal
+if (stype == 0 || stype == 1) && (ttype == 0 || ttype == 1)
 
-	% Now find mode voltages from the mode currents
-	Ve = Ie./Ye;
-	Vm = Im./Ym;
-    else
-	% The case when the testing function is via - we need to
-	% find the integral of the current over the target layer
-	IIm = Im.*reshape(calc_iii(tlm, tl, 0, 1, z(sl), sl), maxm, maxn);
-    end
+    % Use the tlines calculator to find the admittance between source and
+    % observation points in the equivalent transmission lines
+    Ye = 1./reshape(calc_vi(tle, z(tl), tl, z(sl), sl), maxm, maxn);
+    Ym = 1./reshape(calc_vi(tlm, z(tl), tl, z(sl), sl), maxm, maxn);
+
+    % Now find mode voltages from the mode currents
+    Ve = Ie./Ye;
+    Vm = Im./Ym;
+
+% horizontal-to-via
+elseif (stype == 0 || stype == 1) && (ttype == 2)
+
+    % Integral of the current over the via layer
+    IIm = Im.*reshape(calc_iii(tlm, tl, 0, 1, z(sl), sl), maxm, maxn);
+
+% via-to-horizontal
+elseif (stype == 2) && (ttype == 0 || ttype == 1)
+
+    % Modal V at the observation due to the via distributed source
+    vvd = calc_vvd(tlm, z(tl), tl, sl);
+    Vm = Vdm.*reshape(vvd, maxm, maxn);
+    Ve = Vm*0;
+
 else
-    if ttype == 0 || ttype == 1 
-	% Shift the via-induced voltage to the observation segment position
-	Vm = Vdm.*reshape(calc_vvd(tlm, z(tl), tl, sl), maxm, maxn);
-	Ve = Vm*0;
-    else
-	% Integral of current over the observation segment due to the
-	% via-induced voltage. Notice that we drop non-exponential term from
-        % the current integral (by passing c=0)
-	iivd=calc_iivd(tlm, tl, 0, 1, 0, sl);
-	IIm = Vdm.*reshape(iivd, maxm, maxn);
-    end
+% via-to-via
+
+    % Integral of current over the observation segment due to the
+    % via-induced voltage. Notice that we drop non-exponential term from
+    % the current integral (by passing c=0)
+    iivd = calc_iivd(tlm, tl, 0, 1, 0, sl);
+    IIm = Vdm.*reshape(iivd, maxm, maxn);
+
 end
 
 if ttype == 1
