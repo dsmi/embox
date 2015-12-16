@@ -38,7 +38,7 @@ else
 	v2 = -tl.Gls(:,n).*ex2;
 	ex3 = lsrc.*(exp(-k.*(zobs-z2+2*d)).*(k.*d-1)+exp(-k.*(zobs-z1+2*d)));
 	v3 = tl.Gls(:,n).*tl.Ggr(:,n).*ex3;
-	ex4 = lsrc.*(exp(k.*(zobs-z2-2*d))*(-k.*d-1)+exp(k.*(zobs-z2-d)));
+	ex4 = lsrc.*(exp(k.*(zobs-z2-2*d)).*(-k.*d-1)+exp(k.*(zobs-z2-d)));
 	v4 = -tl.Gls(:,n).*tl.Ggr(:,n).*ex4;
 	ex0 = lsrc.*(exp(-k.*(zobs-z1)) + exp(-k.*(z2-zobs)).*(d.*k + 1) - 2);
 	v0 = ex0;
