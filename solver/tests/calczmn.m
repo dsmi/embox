@@ -7,10 +7,14 @@ function [ Z Ve Ye Vm Ym ] = calczmn(wg, ti, tj, tl, ttype, si, sj, sl, stype)
 % wg     - shiedling parameters, see wgparams
 % ti, tj - testing segment coordinates in mesh
 % tl     - testing segment position in the layers stackup
-% ttype  - 1 for x-directed testing segment, 0 for y-directed, 2 for via
+% ttype  - 1 for x-directed testing segment, 0 for y-directed, 2-4 for via
 % si, sj - source segment coordinates in mesh
 % sl     - source segment layer
-% stype  - 1 for x-directed source segment, 0 for y-directed, 2 for via
+% stype  - 1 for x-directed source segment, 0 for y-directed, 2-4 for via
+%
+% Via types are:
+%  2 - via to the previous layer, 3 - via to the next layer, 4 - 'through'
+%      via from the previous to the next layer
 %
 % Returns the matrix element and mode voltages and admittances which can be
 % (are supposed to be) used for some additional tests.
@@ -153,24 +157,51 @@ if (stype == 0 || stype == 1) && (ttype == 0 || ttype == 1)
 
     % Use the tlines calculator to find the admittance between source and
     % observation points in the equivalent transmission lines
-    Ye = 1./reshape(calc_vi(tle, z(tl), tl, z(sl), sl), maxm, maxn);
-    Ym = 1./reshape(calc_vi(tlm, z(tl), tl, z(sl), sl), maxm, maxn);
+    ze = reshape(calc_vi(tle, z(tl), tl, z(sl), sl), maxm, maxn);
+    zm = reshape(calc_vi(tlm, z(tl), tl, z(sl), sl), maxm, maxn);
+    Ye = 1./ze;
+    Ym = 1./zm;
 
     % Now find mode voltages from the mode currents
-    Ve = Ie./Ye;
-    Vm = Im./Ym;
+    Ve = Ie.*ze;
+    Vm = Im.*zm;
 
 % horizontal-to-via
-elseif (stype == 0 || stype == 1) && (ttype == 2)
+elseif (stype == 0 || stype == 1) && (ttype >= 2)
 
-    % Integral of the current over the via layer
-    IIm = Im.*reshape(calc_iii(tlm, tl, 0, 1, z(sl), sl), maxm, maxn);
+    % Current src due to the horz current -> integral of current over the via
+    iii = 0;
+
+    % Connects to the previous layer - increasing: i = (z-zi)/d
+    if (ttype == 2 || ttype == 4)
+        iii = iii + calc_iii(tlm, tl  , 1./tlm.d(tl),   0, z(sl), sl);
+    end
+
+    % Connects to the next layer - decreasing: i = 1 - (z-z{i+i})/d{i+1}
+    if (ttype == 3 || ttype == 4)
+        iii = iii + calc_iii(tlm, tl+1, -1./tlm.d(tl+1), 1, z(sl), sl);
+    end
+
+    % Integral of the current over the via layer(s)
+    IIm = Im.*reshape(iii, maxm, maxn);
 
 % via-to-horizontal
-elseif (stype == 2) && (ttype == 0 || ttype == 1)
+elseif (stype >= 2) && (ttype == 0 || ttype == 1)
 
     % Modal V at the observation due to the via distributed source
-    vvd = calc_vvd(tlm, z(tl), tl, sl);
+    vvd = 0;
+
+    % Connects to the previous layer - increasing (linear only)
+    if (stype == 2 || stype == 4)
+        vvd = vvd + calc_vvl(tlm, z(tl), tl, sl, 1./tlm.d(tl));
+    end
+
+    % Connects to the next layer - decreasing (both linear and constant parts)
+    if (stype == 3 || stype == 4)
+        vvd = vvd + calc_vvd(tlm, z(tl), tl, sl+1);
+        vvd = vvd + calc_vvl(tlm, z(tl), tl, sl+1, -1./tlm.d(tl+1));
+    end
+
     Vm = Vdm.*reshape(vvd, maxm, maxn);
     Ve = Vm*0;
 
@@ -178,9 +209,32 @@ else
 % via-to-via
 
     % Integral of current over the observation segment due to the
-    % via-induced voltage. Notice that we drop non-exponential term from
-    % the current integral (by passing c=0)
-    iivd = calc_iivd(tlm, tl, 0, 1, 0, sl);
+    % via-induced voltage. Notice that we drop non-exponential terms from
+    % the current integrals (by passing c=0)
+    iivd = 0;
+
+    % testing - prev, source - prev
+    if (ttype == 2 || ttype == 4) && (stype == 2 || stype == 4)
+        iivd = iivd + calc_iivl(tlm, tl, 1./tlm.d(tl), 0, -1, sl, 1./tlm.d(sl));
+    end
+
+    % testing - prev, source - next
+    if (ttype == 2 || ttype == 4) && (stype == 3 || stype == 4)
+        iivd = iivd + calc_iivd(tlm, tl, 1./tlm.d(tl), 0, -1, sl+1);
+        iivd = iivd + calc_iivl(tlm, tl, 1./tlm.d(tl), 0, -1, sl+1, -1./tlm.d(sl+1));
+    end
+
+    % testing - next, source - prev
+    if (ttype == 3 || ttype == 4) && (stype == 2 || stype == 4)
+        iivd = iivd + calc_iivl(tlm, tl+1, -1./tlm.d(tl+1), 1, -1, sl, 1./tlm.d(sl));
+    end
+
+    % testing - next, source - next
+    if (ttype == 3 || ttype == 4) && (stype == 3 || stype == 4)
+        iivd = iivd + calc_iivd(tlm, tl+1, -1./tlm.d(tl+1), 1, -1, sl+1);
+        iivd = iivd + calc_iivl(tlm, tl+1, -1./tlm.d(tl+1), 1, -1, sl+1, -1./tlm.d(sl+1));
+    end
+
     IIm = Vdm.*reshape(iivd, maxm, maxn);
 
 end

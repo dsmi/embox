@@ -92,7 +92,8 @@ for mli = 1:length(mesh.layers)
 		xjm = mlay.xj(m);
 		vin = nlay.vi(n);
 		vjn = nlay.vj(n);
-		z = fcalczmn(wg, xim, xjm, mpos, 1, vin, vjn, npos, 2);
+                stype = 1 + (nlay.vprev>0) + 2*(nlay.vnext>0); % 2, 3, or 4
+		z = fcalczmn(wg, xim, xjm, mpos, 1, vin, vjn, npos, stype);
 		Z(cumbf(mli)+m,cumbf(nli)+nnx+nny+n) = z*viac;
 	    end
 	end
@@ -128,7 +129,8 @@ for mli = 1:length(mesh.layers)
 		yjm = mlay.yj(m);
 		vin = nlay.vi(n);
 		vjn = nlay.vj(n);
-		z = fcalczmn(wg, yim, yjm, mpos, 0, vin, vjn, npos, 2);
+                stype = 1 + (nlay.vprev>0) + 2*(nlay.vnext>0); % 2, 3, or 4
+		z = fcalczmn(wg, yim, yjm, mpos, 0, vin, vjn, npos, stype);
 		Z(cumbf(mli)+nmx+m,cumbf(nli)+nnx+nny+n) = z*viac;
 	    end
 	end
@@ -140,7 +142,8 @@ for mli = 1:length(mesh.layers)
 		vjm = mlay.vj(m);
 		xin = nlay.xi(n);
 		xjn = nlay.xj(n);
-		z = fcalczmn(wg, vim, vjm, mpos, 2, xin, xjn, npos, 1);
+                ttype = 1 + (mlay.vprev>0) + 2*(mlay.vnext>0); % 2, 3, or 4
+		z = fcalczmn(wg, vim, vjm, mpos, ttype, xin, xjn, npos, 1);
 		Z(cumbf(mli)+nmx+nmy+m,cumbf(nli)+n) = z*viac;
 	    end
 	end
@@ -152,7 +155,8 @@ for mli = 1:length(mesh.layers)
 		vjm = mlay.vj(m);
 		yin = nlay.yi(n);
 		yjn = nlay.yj(n);
-		z = fcalczmn(wg, vim, vjm, mpos, 2, yin, yjn, npos, 0);
+                ttype = 1 + (mlay.vprev>0) + 2*(mlay.vnext>0); % 2, 3, or 4
+		z = fcalczmn(wg, vim, vjm, mpos, ttype, yin, yjn, npos, 0);
 		Z(cumbf(mli)+nmx+nmy+m,cumbf(nli)+nnx+n) = z*viac;
 	    end
 	end
@@ -164,7 +168,9 @@ for mli = 1:length(mesh.layers)
 		vjm = mlay.vj(m);
 		vin = nlay.vi(n);
 		vjn = nlay.vj(n);
-		z = fcalczmn(wg, vim, vjm, mpos, 2, vin, vjn, npos, 2);
+                stype = 1 + (nlay.vprev>0) + 2*(nlay.vnext>0); % 2, 3, or 4
+                ttype = 1 + (mlay.vprev>0) + 2*(mlay.vnext>0); % 2, 3, or 4
+		z = fcalczmn(wg, vim, vjm, mpos, ttype, vin, vjn, npos, stype);
 		Z(cumbf(mli)+nmx+nmy+m,cumbf(nli)+nnx+nny+n) = z*viac*viac;
 	    end
 	end

@@ -1,5 +1,5 @@
-function layer = mklayer(B, BV)
-% layer = mklayer(B, BV)
+function layer = mklayer(B, BV, vprev, vnext)
+% layer = mklayer(B, BV, vprev, vnext)
 %
 % Creates a vertical/flat mesh representing a layer of metallization.
 % Given a bitmap representing the metal shape (recall that we use the
@@ -49,6 +49,10 @@ else
     layer.vi = ones(0,1);
     layer.vj = ones(0,1);
 end
+
+% Via span
+layer.vprev = exist('vprev') && vprev;
+layer.vnext = exist('vnext') && vnext;
 
 % Made of copper by default
 layer.conductivity = ccopper;
