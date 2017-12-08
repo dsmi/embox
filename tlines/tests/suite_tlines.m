@@ -12,3 +12,5 @@ addTest('test_tlines_iii');
 addTest('test_tlines_iivd');
 addTest('test_tlines_2');
 addTest('test_tlines_3');
+addTest('test_tlines_vid');
+addTest('test_tlines_ivid');

@@ -30,16 +30,14 @@ else
 	d = tl.d(:,n);
 	t1 = tl.t1(:,n);
 	t = tl.t(:,n);
-	ex1 = (1-2*t1+t)./(k.*k);
+	ex1 = 1 - 2*t1 + t;
 	i1 = -tl.Ggr(:,n).*ex1;
-	ex2 = (t-2*t1+1)./(k.*k);
-	i2 = -tl.Gls(:,n).*ex2;
-	ex3 = t.*(2-t1-1./t1)./(-k.*k);
+	i2 = -tl.Gls(:,n).*ex1;
+	ex3 = -t.*(2-t1-1./t1);
 	i3 = tl.Gls(:,n).*tl.Ggr(:,n).*ex3;
-	ex4 = t.*(2-t1-1./t1)./(-k.*k);
-	i4 = tl.Gls(:,n).*tl.Ggr(:,n).*ex4;
-	ex0 = (2*d-(2-2*t1)./k)./k;
+	i4 = tl.Gls(:,n).*tl.Ggr(:,n).*ex3;
+	ex0 = 2*d.*k + 2*(t1 - 1);
 	i = ex0 + (i1+i2+i3+i4)./(1-tl.Gls(:,n).*tl.Ggr(:,n).*tl.t(:,n));
-	i = i .* (tl.Y0(:,n)/2);
+	i = i .* (tl.Y0(:,n)./(2*k.*k));
 end
 end
