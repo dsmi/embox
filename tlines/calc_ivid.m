@@ -33,7 +33,7 @@ else
     ex1 = 1 - 2*t1 + t;
     v1 = tl.Ggr(:,n).*ex1;
     v2 = tl.Gls(:,n).*ex1;
-    ex3 = -t.*(2-t1-1./t1);
+    ex3 = -t.*(2-t1) + t1;
     v3 = tl.Gls(:,n).*tl.Ggr(:,n).*ex3;
     v4 = tl.Gls(:,n).*tl.Ggr(:,n).*ex3;
     ex0 = 2.*k.*d + 2*(t1 - 1); % Direct ray
