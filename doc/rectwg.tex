@@ -1,0 +1,61 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+
+\def\myeq{=}
+
+\DeclareMathOperator{\Lapl}{\mathcal{L}}
+
+\newcommand{\mj}{j} %% imaginary j
+\renewcommand\Re{\operatorname{Re}}
+\renewcommand\Im{\operatorname{Im}}
+
+\newcommand\myvec[1]{\mathbf{#1}}
+
+\def\E{\myvec{E}} % electric field
+\def\H{\myvec{H}} % magnetic field
+\def\J{\myvec{J}} % electric current
+
+% Set the beginning of a LaTeX document
+\begin{document}
+
+Modes of rectangular waveguide
+
+\begin{align}
+   \Psi_{mn}^e &= N_{mn}^e cos(k_mx)cos(k_ny) \\
+   \Psi_{mn}^m &= N_{mn}^m sin(k_mx)sin(k_ny)
+\end{align}
+
+\begin{align}
+   k_m &= \frac{m\pi}{a} \\
+   k_n &= \frac{n\pi}{b}
+\end{align}
+
+\begin{align}
+  \nabla_t\Psi^e &= -\myvec{u_x}N_{mn}^ek_m sin(k_mx)cos(k_ny) 
+                    - \myvec{u_y}N_{mn}^ek_n cos(k_mx)sin(k_ny) \\
+  \nabla_t\Psi^m &= \myvec{u_x}N_{mn}^mk_m cos(k_mx)sin(k_ny) 
+                    + \myvec{u_y}N_{mn}^mk_n sin(k_mx)cos(k_ny)
+\end{align}
+
+\begin{align}
+  \myvec{e^e} &= \myvec{u_z} \times \nabla_t\Psi^e \\
+  \myvec{h^e} &= -\nabla_t\Psi^e  \\
+  \myvec{e^m} &= - \nabla_t\Psi^m \\
+  \myvec{h^m} &= - \myvec{u_z} \times \nabla_t\Psi^m
+\end{align}
+
+
+\begin{align}
+  \myvec{e^e} &= &\myvec{u_x}N_{mn}^ek_n cos(k_mx)sin(k_ny)
+                -&\myvec{u_y}N_{mn}^ek_m sin(k_mx)cos(k_ny) \\
+  \myvec{h^e} &= &\myvec{u_x}N_{mn}^ek_m sin(k_mx)cos(k_ny) 
+                 + &\myvec{u_y}N_{mn}^ek_n cos(k_mx)sin(k_ny)\\
+  \myvec{e^m} &=  -&\myvec{u_x}N_{mn}^mk_m cos(k_mx)sin(k_ny) 
+                    - &\myvec{u_y}N_{mn}^mk_n sin(k_mx)cos(k_ny) \\
+  \myvec{h^m} &=  &\myvec{u_x}N_{mn}^mk_n sin(k_mx)cos(k_ny) 
+                    - &\myvec{u_y}N_{mn}^mk_m cos(k_mx)sin(k_ny)
+\end{align}
+
+
+\end{document}
