@@ -22,20 +22,20 @@
 Modes of rectangular waveguide
 
 \begin{align}
-   \Psi_{mn}^e &= N_{mn}^e cos(k_mx)cos(k_ny) \\
-   \Psi_{mn}^m &= N_{mn}^m sin(k_mx)sin(k_ny)
+   \Psi_{mn}^e &= N_{mn}^e cos(k_xx)cos(k_yy) \\
+   \Psi_{mn}^m &= N_{mn}^m sin(k_xx)sin(k_yy)
 \end{align}
 
 \begin{align}
-   k_m &= \frac{m\pi}{a} \\
-   k_n &= \frac{n\pi}{b}
+   k_x &= \frac{m\pi}{a} \\
+   k_y &= \frac{n\pi}{b}
 \end{align}
 
 \begin{align}
-  \nabla_t\Psi^e &= -\myvec{u_x}N_{mn}^ek_m sin(k_mx)cos(k_ny) 
-                    - \myvec{u_y}N_{mn}^ek_n cos(k_mx)sin(k_ny) \\
-  \nabla_t\Psi^m &= \myvec{u_x}N_{mn}^mk_m cos(k_mx)sin(k_ny) 
-                    + \myvec{u_y}N_{mn}^mk_n sin(k_mx)cos(k_ny)
+  \nabla_t\Psi^e &= -\myvec{u_x}N^ek_x sin(k_xx)cos(k_yy) 
+                    - \myvec{u_y}N^ek_y cos(k_xx)sin(k_yy) \\
+  \nabla_t\Psi^m &= \myvec{u_x}N^mk_x cos(k_xx)sin(k_yy) 
+                    + \myvec{u_y}N^mk_y sin(k_xx)cos(k_yy)
 \end{align}
 
 \begin{align}
@@ -47,14 +47,14 @@ Modes of rectangular waveguide
 
 
 \begin{align}
-  \myvec{e^e} &= &\myvec{u_x}N_{mn}^ek_n cos(k_mx)sin(k_ny)
-                -&\myvec{u_y}N_{mn}^ek_m sin(k_mx)cos(k_ny) \\
-  \myvec{h^e} &= &\myvec{u_x}N_{mn}^ek_m sin(k_mx)cos(k_ny) 
-                 + &\myvec{u_y}N_{mn}^ek_n cos(k_mx)sin(k_ny)\\
-  \myvec{e^m} &=  -&\myvec{u_x}N_{mn}^mk_m cos(k_mx)sin(k_ny) 
-                    - &\myvec{u_y}N_{mn}^mk_n sin(k_mx)cos(k_ny) \\
-  \myvec{h^m} &=  &\myvec{u_x}N_{mn}^mk_n sin(k_mx)cos(k_ny) 
-                    - &\myvec{u_y}N_{mn}^mk_m cos(k_mx)sin(k_ny)
+  \myvec{e^e} &= \hphantom{-}\myvec{u_x}N^ek_y cos(k_xx)sin(k_yy)
+                     -\myvec{u_y}N^ek_x sin(k_xx)cos(k_yy) \\
+  \myvec{h^e} &= \hphantom{-}\myvec{u_x}N^ek_x sin(k_xx)cos(k_yy) 
+                  +\myvec{u_y}N^ek_y cos(k_xx)sin(k_yy)\\
+  \myvec{e^m} &=   -\myvec{u_x}N^mk_x cos(k_xx)sin(k_yy) 
+                    -\myvec{u_y}N^mk_y sin(k_xx)cos(k_yy) \\
+  \myvec{h^m} &=  \hphantom{-}\myvec{u_x}N^mk_y sin(k_xx)cos(k_yy) 
+                    - \myvec{u_y}N^mk_x cos(k_xx)sin(k_yy)
 \end{align}
 
 
