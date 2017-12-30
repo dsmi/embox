@@ -22,4 +22,4 @@ addTest('test_calczmn3');
 addTest('test_calczmn4');
 addTest('test_mkzmat2');
 addTest('test_mkzmat3');
-addTest('test_vfields');
+addTest('test_vline');

@@ -205,14 +205,17 @@ else
 	% via testing function
 	iivd = calc_iivd(tlm, tl, sl);
 	r = reshape(iivd, maxm, maxn);
-	if tl == sl
-	   r = r - h(sl).*Y0m(:,:,sl)./gamma(:,:,sl);
-	end
 	m = -kc.^4/(freq*weps(sl)*freq*weps(tl));
 	Gvv = Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*r;
 	%pvv = sin(kx.*xt).*sin(ky.*yt).*sin(kx.*xs).*sin(ky.*ys);
 	pvv = (cos(kx.*(xt-xs)).*cos(ky.*(yt-ys))-cos(kx.*(xt-xs)).*cos(ky.*(yt+ys))...
 	      -cos(kx.*(xt+xs)).*cos(ky.*(yt-ys))+cos(kx.*(xt+xs)).*cos(ky.*(yt+ys)))./4;
 	Z = sum(sum(Gvv.*pvv, 2), 1);
+        % via self-reaction, see calcznm.m for details
+	if tl == sl && ti == si && tj == sj
+	   m = -kc.^2/(j*freq*weps(sl));
+	   Gss = -Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m;
+	   Z = Z - h(sl)*sum(sum(Gss.*pvv, 2), 1);
+	end
     end
 end

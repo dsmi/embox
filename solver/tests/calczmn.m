@@ -42,8 +42,11 @@ k=freq*sqrt(weps.*wmu);
 kx = wm*pi./a;
 ky = wn*pi./b;
 
+% Squared horizontal wavenumber
+kx2ky2 = kx.^2+ky.^2;
+
 % cutoff wavenumber of the waveguide geometry
-kc=sqrt(kx.^2+ky.^2);
+kc=sqrt(kx2ky2);
 
 % number of layers/sections
 nl=length(weps);
@@ -134,12 +137,19 @@ elseif stype == 0
     Ie=Ne.*kx.*Gdx_flat.*Gdy_tri.*sin(kx.*xs).*cos(ky.*ys);
     Im=Nm.*ky.*Gdx_flat.*Gdy_tri.*sin(kx.*xs).*cos(ky.*ys);
 else               
-    % Calculate the distributed voltage source intensity in the waveguide
-    % equivalent transmission line due to the via current by evaluating
-    % integral of the via current multiplied by the eigenfunction.
-    % The eigenfunction for the tm modes is: Psi_m=nm*sin(kx*x)*sin(ky*y)
-    m=kc.*kc./(j*freq*weps(sl));
-    Vdm=m.*Nm.*Gdx_flat.*Gdy_flat.*sin(kx.*xs).*sin(ky.*ys);
+    % We replace Z-directed electric current with a loop of magnetic current.
+    % Then instead of evaluating integral M*\int -h dl (where h is the mode
+    % vector) encircling the electric current we calculate integral
+    % M*\int -rot(H) da over the current crossection area in accordance with
+    % the curl theorem.
+
+    % Intensity of magnetic current in dx-by-dy loop so it gives the same
+    % fields as the electric dipole of unit length and intensity dx*dy
+    K = -(dx*dy)./(j*freq*weps(sl)*dx*dy);
+
+    % Integrate -M*curl(h) as described above.
+    Vdm = -K.*Nm.*kx2ky2.*Gdy_flat.*Gdx_flat.*sin(kx.*xs).*sin(ky.*ys);
+    Vde = Vdm*0; % No TE modes from via
 end
 
 % Only used when both source and testing are horizontal, otherwise zero
@@ -160,50 +170,20 @@ if (stype == 0 || stype == 1) && (ttype == 0 || ttype == 1)
     Ve = Ie./Ye;
     Vm = Im./Ym;
 
-% horizontal-to-via
 elseif (stype == 0 || stype == 1) && (ttype == 2)
-
+% horizontal-to-via
     % Integral of the current over the via layer
     IIm = Im.*reshape(calc_iii(tlm, tl, z(sl), sl), maxm, maxn);
-
-% via-to-horizontal
 elseif (stype == 2) && (ttype == 0 || ttype == 1)
-
+% via-to-horizontal
     % Modal V at the observation due to the via distributed source
-    vvd = calc_vvd(tlm, z(tl), tl, sl);
-    Vm = Vdm.*reshape(vvd, maxm, maxn);
-    Ve = Vm*0;
-
+    Ve = Vde.*reshape(calc_vvd(tle, z(tl), tl, sl), maxm, maxn);
+    Vm = Vdm.*reshape(calc_vvd(tlm, z(tl), tl, sl), maxm, maxn);
 else
 % via-to-via
-
-    % Integral of current over the observation segment due to the
-    % via-induced voltage. Notice that we drop non-exponential term from
-    % the current integral (by passing c=0)
-    iivd = calc_iivd(tlm, tl, sl);
-    IIm = Vdm.*reshape(iivd, maxm, maxn);
-
-    % Via self-impedance needs to be handled separately
-    if tl == sl
-	% In the case of distributed voltage source, the transmission
-	% line equations are
-	%  d2I/dz2 - YZI = -YS
-	%  d2V/dz2 - YZV = 0
-        % Where
-        %  Z is the series impedance per len
-        %  Y is the shunt admittance per len
-        %  S is the voltage source per len
-        % And the solutions are
-        %  V(z)=Vp*exp(-gamma*z) + Vm*exp(gamma*z)
-        %  I(z)=Ip*exp(-gamma*z) + Im*exp(gamma*z)+S/Z
-	% where
-	%  gamma = sqrt(YZ) is a propagation constant
-	%  Vp/Ip = -Vm/Im = sqrt(Z/Y) = Z0 is a characteristic impedance
-	% But - notice that the solution for I has the constant term S/Z.
-	% We need to subtract it from the current when evaluating
-	% the self-impedance!
-	IIm = IIm - Vdm.*h(sl).*Y0m(:,:,sl)./gamma(:,:,sl);
-    end
+    % Currents at observation from source voltages
+    IIe = Vde.*reshape(calc_iivd(tle, tl, sl), maxm, maxn);
+    IIm = Vdm.*reshape(calc_iivd(tlm, tl, sl), maxm, maxn);
 end
 
 if ttype == 1
@@ -215,10 +195,43 @@ elseif ttype == 0
     Ze=sum(sum(-Ve.*Ne.*kx.*Gdx_flat.*Gdy_tri.*sin(kx.*xt).*cos(ky.*yt), 2), 1);
     Zm=sum(sum(-Vm.*Nm.*ky.*Gdx_flat.*Gdy_tri.*sin(kx.*xt).*cos(ky.*yt), 2), 1);
 else               
-    % via
-    m = kc.*kc./(j*freq*weps(tl));
-    Zm = sum(sum(m.*IIm.*Nm.*Gdx_flat.*Gdy_flat.*sin(kx.*xt).*sin(ky.*yt), 2), 1);
-    Ze = 0;
+
+    % Calculate reaction of field from the source segment (whatever it is) on the
+    % via's Z-directed electric current. Notice that K here is the same (with different sign)
+    % as the intensity of magnetic current loop in the via source calculation.
+    K = (dx*dy)./(j*freq*weps(tl)*dx*dy);
+    Zm = K*(sum(sum(IIm.*Nm.*kx2ky2.*Gdy_flat.*Gdx_flat.*sin(kx.*xt).*sin(ky.*yt), 2), 1));
+    Ze = Zm*0;
+
+    % Via self-impedance needs to be handled separately since we replaced z-directed
+    % electric current with x-y loop of magnetic current.
+    % If we write the equation
+    %   \oint H \cdot dl = \int (j\omega\epsilon E + J) \cdot ds
+    % for a contour encircling the via we can see that the left hand side of the equation
+    % does not change once we replace J with M since fields outside the source region are
+    % the same. Therefore difference between E-fields inside the via when J-source and
+    % M-source is used is:
+    %    \int E^J \cdot ds = \int E^M \cdot ds - \frac{1}{j\omega\epsilon} \int J \cdot ds
+    % Therefore for the via self-reaction we subtract the last integral multiplied by the
+    % via length.
+    % Another way of viewing that is as follows. Equation for the curl of H can be written
+    % as:
+    %    \nabla \times H = J^t
+    % where J^t is the total current:
+    %    J^t = j\omega\epsilon E + J^i
+    % which consists of displacement current and impressed current. When we replace electric
+    % current with magnetic loop in this equation we replace the impressed electric current
+    % with displacement one, and the latter is due to electric field which in turn is induced
+    % by magnetic current loop. Therefore when evaluating the via self-reaction we need to
+    % subtract this E due to magnetic current loop from the total electric field.
+    % ! An extremely important aspect here is that we use not the 'wanted' value of the
+    % source current J which is unity (and wanted value of E to create the corresponding
+    % displacement current is J / (j\omega\epsilon) ) but its value as it is expanded as
+    % a sum over the waveguide modes that we use to expand fields and currents.
+    if tl == sl && ti == si && tj == sj && ttype == stype
+        Zm = Zm - h(sl)*sum(sum(Vdm.*Nm.*Gdx_flat.*Gdy_flat.*sin(kx.*xt).*sin(ky.*yt), 2), 1);
+    end
+
 end
 
 Z=Ze+Zm;

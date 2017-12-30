@@ -1,4 +1,4 @@
-%function test_tlines_3
+function test_tlines_3
 % One more test based on the exponent overflow problem
   
 z  = [ 0.00000000000000e+000  5.00000000000000e-004  5.01000000000000e-004 1.00100000000000e-003 ];

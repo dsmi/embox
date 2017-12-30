@@ -100,6 +100,9 @@ Gdy_flat=gflat(dy,ky);
 % conditioning of Z matrix.
 viac = 1/dx;
 
+% To shorten some expressions
+viac2 = viac * viac;
+
 % We want to pre-allocate the Z matrix, for that we need to know its size.
 % To calculate the size we need to count the basis functions on all layers.
 numx = sum(cellfun(@(v) length(v), { mesh.layers(:).xi }));
@@ -368,12 +371,6 @@ for mli = 1:length(mesh.layers)
 	iivd = calc_iivd(tlm, mpos, npos);
 	r = reshape(iivd, maxm, maxn);
 
-	% if source and testing vias are on the same layer - see calczmn for
-        % some additional details on same-layer calculations for the vias
-	if mpos == npos
-	   r = r - h(npos).*Y0m(:,:,npos)./gamma(:,:,npos);
-        end
-
 	Gvv = Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*r;
 
 	[ cc, ss, cs, sc ] = myfft(Gvv);
@@ -398,8 +395,23 @@ for mli = 1:length(mesh.layers)
 	isum_jdif = sub2ind(size(cc), isum, jdif);
 	isum_jsum = sub2ind(size(cc), isum, jsum);
 
-	Zvv = viac * viac * ...
-	     (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
+	Zvv = viac * viac * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
+
+        % see calczmn.m for details on via self-reaction calculations
+	if mpos == npos && numel(Zvv)
+
+	    m = -h(npos)*kc.^2/(j*freq*weps(npos));
+	    Gss = -Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m;
+
+	    [ cc, ss, cs, sc ] = myfft(Gss);
+
+            % We can reuse all the indices here
+            Zss = viac2 * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
+
+            % Self-terms only, so this is applied to diagonal elements
+            dstride = (size(Zvv,1)+1); % stride from one diagonal element to next
+            Zvv(1:dstride:end) = Zvv(1:dstride:end) - Zss(1:dstride:end);
+	end
 	
 	% compose the entire matrix block for this pair of layers
 	Zl = [ Zxx Zxy Zxv ; Zyx Zyy Zyv ; Zvx Zvy Zvv ];
