@@ -72,7 +72,6 @@ function Y=simline(freq, nx, ny, a, b, h, c, w)
     B=linefromto(B, -1.0, 0.5, 2.0, 0.5, w/a);
 
     layer=mklayer(B);
-    layer=rmfield(layer, 'conductivity'); % make it a perfect conductor
     layer.pos=1;
 
     mesh.layers(1) = layer;

@@ -51,7 +51,6 @@ function Y=simline(freq, nx, ny, a, b, h, w)
     B=zeros(nx+2,ny+2);
     B=linefromto(B, -1.0, ypos, 2.0, ypos, w*ny/(nx*b));
     layer = mklayer(B);
-    layer = rmfield(layer, 'conductivity'); % perfect conductor
     mesh = mkmesh(layer, 1, layer, 2); % two identical layers
 
     % Identify ports : first two ports on one side

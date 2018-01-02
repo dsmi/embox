@@ -45,14 +45,12 @@ cj = ny/2 - 1;
 B=zeros(nx+2,ny+2);
 B=drawline(B, cx, cy-n2, cx, cy+n2, 1);
 layer = mklayer(B);
-layer = rmfield(layer, 'conductivity');
 layer.pos = nlay/2 - n2;
 mesh.layers(1) = layer;
 
 for li=1:(n2*2)
     B=zeros(nx+2,ny+2);
     layer = mklayer(B);
-    layer = rmfield(layer, 'conductivity');
     layer.vi = [ ci     ci    ];
     layer.vj = [ cj-n2  cj+n2 ];
     layer.pos = nlay/2 - n2 + li;
@@ -62,7 +60,6 @@ end
 B=zeros(nx+2,ny+2);
 B=drawline(B, cx, cy-n2, cx, cy+n2, 1);
 layer = mklayer(B);
-layer = rmfield(layer, 'conductivity');
 layer.vi = [ ci     ci    ];
 layer.vj = [ cj-n2  cj+n2 ];
 layer.pos = nlay/2 + n2;

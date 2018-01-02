@@ -40,7 +40,6 @@ BV = drawcir(B0, cnx, cny, 0.1);
 
 for lidx=1:nlay
     layer = mklayer(B0, BV);
-    layer = rmfield(layer, 'conductivity'); % perfect conductor
     layer.pos = lidx;
     mesh.layers(lidx) = layer;
 end

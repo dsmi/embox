@@ -79,7 +79,7 @@ function [ Y I ]=simline(freq, nx, ny, a, b, h, w)
     ypos = 0.5+mod(w*ny/b,2)*0.5*b/ny;
     B=zeros(nx+2,ny+2);
     B=linefromto(B, -1.0, ypos, 2.0, ypos, w*ny/(nx*b));
-    layer = mklayer(B);
+    layer = mklayer(B, B*0, ccopper);
     mesh = mkmesh(layer, 1, layer, 2); % two identical layers
     %mesh = mkmesh(layer, 1); % one layer
 
