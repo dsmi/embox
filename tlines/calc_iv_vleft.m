@@ -13,5 +13,5 @@ G = tl.Ggr(:,iobs).*tl.t(:,iobs);
 k = tl.k(:,iobs);
 % forward- and backward-traveling waves
 ex1 = -tl.t1(:,iobs) + 1;
-ex2 = 1./tl.t1(:,iobs) - 1;
-iv = (ex1+ex2.*G)./(k.*(1+G));
+ex2 = tl.Ggr(:,iobs).*tl.t1(:,iobs) - G;
+iv = (ex1+ex2)./(k.*(1+G));

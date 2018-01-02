@@ -11,6 +11,6 @@ function i = calc_ii_vleft(tl,iobs)
 % right-looking reflection coefficient at the leftmost point
 G = tl.Ggr(:,iobs).*tl.t(:,iobs);
 ex1 = 1-tl.t1(:,iobs);
-ex2 = 1./tl.t1(:,iobs)-1;
+ex2 = tl.Ggr(:,iobs).*tl.t1(:,iobs) - G;
 % forward- and backward-traveling waves
-i = tl.Y0(:,iobs).*(ex1-ex2.*G)./((1+G).*tl.k(:,iobs));
+i = tl.Y0(:,iobs).*(ex1-ex2)./((1+G).*tl.k(:,iobs));

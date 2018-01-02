@@ -14,4 +14,4 @@ G = tl.Ggr(:,iobs).*tl.t(:,iobs);
 k = tl.k(:,iobs);
 z = zobs - tl.z(:,iobs);
 % forward- and backward-traveling waves
-v = (exp(-k.*z)+exp(k.*z).*G)./(1+G);
+v = (exp(-k.*z)+exp(k.*(z - 2*tl.d(:,iobs))).*tl.Ggr(:,iobs))./(1+G);
