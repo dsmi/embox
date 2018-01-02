@@ -29,30 +29,27 @@ for lidx = 1:length(mesh.layers)
     lay = mesh.layers(lidx);
     B = zeros(wg.nx+2,wg.ny+2);
 
+    % Number of x-, y- and z-directed basis functions for this layer
+    Nx = length(lay.xi);
+    Ny = length(lay.yi);
+    Nz = length(lay.vi);
+
     % currents of this layer
-    Il = I(cumbf(lidx)+1:cumbf(lidx+1));
+    Ix = I( cumbf(lidx)           + 1 : cumbf(lidx) + Nx );
+    Iy = I( cumbf(lidx) + Nx      + 1 : cumbf(lidx) + Nx + Ny );
+    Iz = I( cumbf(lidx) + Nx + Ny + 1 : cumbf(lidx) + Nx + Ny + Nz );
 
-    % horizontal currents
-    ix = zeros(wg.nx+2,wg.ny+2);
-    iy = zeros(wg.nx+2,wg.ny+2);
-
-    % indices of the basis functions in B, ix and iy
-    xind1 = sub2ind(size(B), lay.xi+1,lay.xj+2);
-    xind2 = sub2ind(size(B), lay.xi+2,lay.xj+2);
-    yind1 = sub2ind(size(B), lay.yi+2,lay.yj+1);
-    yind2 = sub2ind(size(B), lay.yi+2,lay.yj+2);
+    % indices of the basis functions in B
+    xind1 = sub2ind(size(B), lay.xi+1, lay.xj+2); % source
+    xind2 = sub2ind(size(B), lay.xi+2, lay.xj+2); % sink
+    yind1 = sub2ind(size(B), lay.yi+2, lay.yj+1); % source
+    yind2 = sub2ind(size(B), lay.yi+2, lay.yj+2); % sink
 
     % populate bitmap - ones correspond to basis functions
     B(xind1) = 1;
     B(xind2) = 1;
     B(yind1) = 1;
     B(yind2) = 1;
-
-    % calculate currents
-    ix(xind1) = ix(xind1) + Il(1:length(xind1)).' ./ dx;
-    ix(xind2) = ix(xind2) + Il(1:length(xind1)).' ./ dx;
-    iy(yind1) = iy(yind1) + Il(length(xind1)+1:length(xind1)+length(yind1)).' ./ dy;
-    iy(yind2) = iy(yind2) + Il(length(xind1)+1:length(xind1)+length(yind1)).' ./ dy;
 
     % find nonzero pixels in B, and generate verices
     [ ii, jj ] = find(B);
@@ -62,9 +59,26 @@ for lidx = 1:length(mesh.layers)
     % 2 subtracted to get coordinates in ranges [ -dx a+dx ] [ -dy a+dy ] 
     xy = (iijj + repmat([ 0 0 ; 0 1 ; 1 1 ; 1 0 ] - 2, nr, 1)).*dxdy;
 
-    % magnitute of the current at t=0
-    im = sqrt(real(ix).^2 + real(iy).^2);
-    color = im(sub2ind(size(B), ii, jj));
+    % Color for each vertex of the rect is computed indivitually. Color of
+    % vertex1 is sum of incoming x and y currents since this vertex has
+    % 'incoming' edges adjacent to it, vertex2 has incoming x and outgoing
+    % y edges and so on.
+    color1 = color2 = color3 = color4 = B*0;
+    color1(xind2) = color1(xind2) + real(Ix) ./ dy;
+    color1(yind2) = color1(yind2) + real(Iy) ./ dx;
+    color2(xind2) = color2(xind2) + real(Ix) ./ dy;
+    color2(yind1) = color2(yind1) + real(Iy) ./ dx;
+    color3(xind1) = color3(xind1) + real(Ix) ./ dy;
+    color3(yind1) = color3(yind1) + real(Iy) ./ dx;
+    color4(xind1) = color4(xind1) + real(Ix) ./ dy;
+    color4(yind2) = color4(yind2) + real(Iy) ./ dx;
+
+    % Interleave the vertex colors
+    colors = xy(:,1)*0;
+    colors(1:4:end) = color1(sub2ind(size(B), ii, jj));
+    colors(2:4:end) = color2(sub2ind(size(B), ii, jj));
+    colors(3:4:end) = color3(sub2ind(size(B), ii, jj));
+    colors(4:4:end) = color4(sub2ind(size(B), ii, jj));
 
     % and then triangles
     voffs = repmat(kron((0:4:(nr*4-4))', ones(2,1)), 1, 3); % vertex index offsets
@@ -74,16 +88,12 @@ for lidx = 1:length(mesh.layers)
     if numel(xy)
 	Tri = [ Tri ; T + size(xyz,1) ];
 	xyz = [ xyz ; [ xy xy(:,1)*0 + lz(lay.pos + 1) ] ];
-	C   = [ C   ; kron(color, ones(4,1)) ];
+	C   = [ C   ; colors ];
     end
 
-    % now the vias in this layer
-    B=zeros(wg.nx+2,wg.ny+2);
-    B(sub2ind(size(B), lay.vi+2,lay.vj+2)) = 1;
-
-    % similar to the above - generate vertices for nonzero pixels of B,
-    % but now we generate two quads one on top of another
-    [ ii, jj ] = find(B);
+    % Via meshing. One via per cell so no bitmap needed
+    ii = lay.vi(:) + 2; % to make it similar to the above
+    jj = lay.vj(:) + 2;
     nr = length(ii); % number of rectangles
     iijj = [ kron(ii, ones(8,1)) , kron(jj, ones(8,1)) ];
     % 2 subtracted to get coordinates in ranges [ -dx a+dx ] [ -dy a+dy ] 
@@ -100,11 +110,14 @@ for lidx = 1:length(mesh.layers)
     voffs = repmat(kron((0:8:(nr*8-8))', ones(8,1)), 1, 3); % vertex index offsets
     T = repmat(viat, nr, 1) + voffs;
 
+    % color from current
+    color = real(Iz) ./ dy;
+
     % add triangulation of this layer vias to the overall
     if numel(xy)
     	Tri = [ Tri ; T + size(xyz,1) ];
     	xyz = [ xyz ; [ xy z ] ];
-	C   = [ C   ; xyz(:,1)*0 ]; % ignored now
+	C   = [ C   ; kron(color, ones(8,1)) ];
     end
 
 end
