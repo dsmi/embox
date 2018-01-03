@@ -23,3 +23,4 @@ addTest('test_calczmn4');
 addTest('test_mkzmat2');
 addTest('test_mkzmat3');
 addTest('test_vline');
+addTest('test_simplevia');

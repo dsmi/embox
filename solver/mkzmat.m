@@ -373,6 +373,12 @@ for mli = 1:length(mesh.layers)
 
 	Gvv = Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*r;
 
+        % see calczmn.m for details on via self-reaction calculations
+	if mpos == npos
+	    m = -h(npos)*kc.^2/(j*freq*weps(npos));
+	    Gvv = Gvv + Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m;
+	end
+
 	[ cc, ss, cs, sc ] = myfft(Gvv);
 
 	[ mvi, nvi ] = ndgrid(mlay.vi, nlay.vi);
@@ -395,23 +401,21 @@ for mli = 1:length(mesh.layers)
 	isum_jdif = sub2ind(size(cc), isum, jdif);
 	isum_jsum = sub2ind(size(cc), isum, jsum);
 
-	Zvv = viac * viac * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
+	Zvv = viac2 * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
 
-        % see calczmn.m for details on via self-reaction calculations
-	if mpos == npos && numel(Zvv)
+        %% % see calczmn.m for details on via self-reaction calculations
+	%% if mpos == npos && numel(Zvv)
 
-	    m = -h(npos)*kc.^2/(j*freq*weps(npos));
-	    Gss = -Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m;
+	%%     m = -h(npos)*kc.^2/(j*freq*weps(npos));
+	%%     Gss = -Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m;
 
-	    [ cc, ss, cs, sc ] = myfft(Gss);
+	%%     [ cc, ss, cs, sc ] = myfft(Gss);
 
-            % We can reuse all the indices here
-            Zss = viac2 * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
+        %%     % We can reuse all the indices here
+        %%     Zss = viac2 * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
 
-            % Self-terms only, so this is applied to diagonal elements
-            dstride = (size(Zvv,1)+1); % stride from one diagonal element to next
-            Zvv(1:dstride:end) = Zvv(1:dstride:end) - Zss(1:dstride:end);
-	end
+        %%     Zvv = Zvv - Zss;
+	%% end
 	
 	% compose the entire matrix block for this pair of layers
 	Zl = [ Zxx Zxy Zxv ; Zyx Zyy Zyv ; Zvx Zvy Zvv ];

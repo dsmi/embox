@@ -211,8 +211,9 @@ else
 	pvv = (cos(kx.*(xt-xs)).*cos(ky.*(yt-ys))-cos(kx.*(xt-xs)).*cos(ky.*(yt+ys))...
 	      -cos(kx.*(xt+xs)).*cos(ky.*(yt-ys))+cos(kx.*(xt+xs)).*cos(ky.*(yt+ys)))./4;
 	Z = sum(sum(Gvv.*pvv, 2), 1);
-        % via self-reaction, see calcznm.m for details
-	if tl == sl && ti == si && tj == sj
+        % via self-reaction and reactions between vias on the same layer, see
+        % calcznm.m for details
+	if tl == sl
 	   m = -kc.^2/(j*freq*weps(sl));
 	   Gss = -Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m;
 	   Z = Z - h(sl)*sum(sum(Gss.*pvv, 2), 1);

@@ -224,11 +224,16 @@ else
     % with displacement one, and the latter is due to electric field which in turn is induced
     % by magnetic current loop. Therefore when evaluating the via self-reaction we need to
     % subtract this E due to magnetic current loop from the total electric field.
-    % ! An extremely important aspect here is that we use not the 'wanted' value of the
-    % source current J which is unity (and wanted value of E to create the corresponding
-    % displacement current is J / (j\omega\epsilon) ) but its value as it is expanded as
-    % a sum over the waveguide modes that we use to expand fields and currents.
-    if tl == sl && ti == si && tj == sj && ttype == stype
+    % Two important aspects:
+    % 1) We use not the 'wanted' value of the source current J which is unity (and wanted
+    % value of E to create the corresponding displacement current is J / (j\omega\epsilon) )
+    % but its value as it is expanded as a sum over the waveguide modes that we use to expand
+    % fields and currents.
+    % 2) We apply this correction not only to the self-reaction of the via but to all
+    % reactions  between the vias on the same layer. Although the 'wanted' value of this
+    % displacement current is zero everywhere outside of the source via the expanded value
+    % is slightly nonzero outside of it and therefore can affect the neighboring vias as well.
+    if tl == sl && ttype == stype
         Zm = Zm - h(sl)*sum(sum(Vdm.*Nm.*Gdx_flat.*Gdy_flat.*sin(kx.*xt).*sin(ky.*yt), 2), 1);
     end
 
