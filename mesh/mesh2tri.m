@@ -1,10 +1,12 @@
-function [ Tri, X, Y, Z, C ] = mesh2tri(wg, mesh, I)
-% [ Tri, X, Y, Z, C ] = mesh2tri(wg, mesh, I)
+function [ Tri, X, Y, Z, C ] = mesh2tri(wg, mesh, I, fi2c)
+% [ Tri, X, Y, Z, C ] = mesh2tri(wg, mesh, I, fi2c)
 % 'Triangulates' mesh so it can be drawn with trisurf/trimesh
 %
 % wg     - shiedling parameters, see wgparams
 % mesh   - meshed metal, see mkmesh
-% 
+% I      - currents
+% fi2c   - function to use to get color from current phasor, real/abs etc
+%
 
 % mesh cell sizes
 dx = wg.a/wg.nx;
@@ -23,6 +25,11 @@ cumbf = [ 0 (cumx + cumy + cumv) ];
 xyz = [];
 Tri = [];
 C = [];
+
+if ~exist('fi2c')
+   fi2c = @real;
+end
+
 
 for lidx = 1:length(mesh.layers)
 
@@ -64,14 +71,14 @@ for lidx = 1:length(mesh.layers)
     % 'incoming' edges adjacent to it, vertex2 has incoming x and outgoing
     % y edges and so on.
     color1 = color2 = color3 = color4 = B*0;
-    color1(xind2) = color1(xind2) + real(Ix) ./ dy;
-    color1(yind2) = color1(yind2) + real(Iy) ./ dx;
-    color2(xind2) = color2(xind2) + real(Ix) ./ dy;
-    color2(yind1) = color2(yind1) + real(Iy) ./ dx;
-    color3(xind1) = color3(xind1) + real(Ix) ./ dy;
-    color3(yind1) = color3(yind1) + real(Iy) ./ dx;
-    color4(xind1) = color4(xind1) + real(Ix) ./ dy;
-    color4(yind2) = color4(yind2) + real(Iy) ./ dx;
+    color1(xind2) = color1(xind2) + fi2c(Ix);
+    color1(yind2) = color1(yind2) + fi2c(Iy);
+    color2(xind2) = color2(xind2) + fi2c(Ix);
+    color2(yind1) = color2(yind1) + fi2c(Iy);
+    color3(xind1) = color3(xind1) + fi2c(Ix);
+    color3(yind1) = color3(yind1) + fi2c(Iy);
+    color4(xind1) = color4(xind1) + fi2c(Ix);
+    color4(yind2) = color4(yind2) + fi2c(Iy);
 
     % Interleave the vertex colors
     colors = xy(:,1)*0;
@@ -111,7 +118,7 @@ for lidx = 1:length(mesh.layers)
     T = repmat(viat, nr, 1) + voffs;
 
     % color from current
-    color = real(Iz) ./ dy;
+    color = fi2c(Iz);
 
     % add triangulation of this layer vias to the overall
     if numel(xy)

@@ -1,5 +1,5 @@
-function layer = mklayer(B, BV, conduct)
-% layer = mklayer(B, BV, conduct)
+function layer = mklayer(B, BV, pos, conduct)
+% layer = mklayer(B, BV, pos, conduct)
 %
 % Creates a vertical/flat mesh representing a layer of metallization.
 % Given a bitmap representing the metal shape (recall that we use the
@@ -50,8 +50,12 @@ else
     layer.vj = ones(0,1);
 end
 
+% Add position if defined
+if exist('pos')
+    layer.pos = pos;
+end
+
 % Add conductivity if defined
 if exist('conduct')
     layer.conductivity = conduct;
 end
-
