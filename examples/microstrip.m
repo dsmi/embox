@@ -25,7 +25,7 @@ function [ Y I wg mesh ] = simline(freq, lnpar)
     h = [ lnpar.d  lnpar.d  repmat(lnpar.t/lnpar.nl, 1, lnpar.nl) ];
 
     % Layer of copper at the bottom is the ground - it is not an ideal conductor
-    epsc = eps0 - j*ccustom/freq; % permittivity for copper
+    epsc = eps0 - j*ccopper/freq; % permittivity for copper
     epsd = eps0 * debye(4.3, 0.02, 1e9/(2*pi), freq); % dielectric
     weps = [ epsc  epsd  repmat(eps0, 1, lnpar.nl) ];
 
