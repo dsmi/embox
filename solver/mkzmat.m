@@ -32,28 +32,28 @@ k=freq*sqrt(weps.*wmu);
 kx = wm*pi./a;
 ky = wn*pi./b;
 
-% cutoff wavenumber of the waveguide geometry
-kc=sqrt(kx.^2+ky.^2);
+% cutoff wavenumber of the waveguide geometry squared
+kc2 = kx.^2+ky.^2;
 
 % number of layers/sections
-nl=length(weps);
+nl = length(weps);
 
 % temporary, used below
-k2=repmat(reshape(k.^2,1,1,nl),maxm,maxn);
-kc2=repmat(kc.^2, [ 1 1 nl ]);
+k2mnl = repmat(reshape(k.^2,1,1,nl),maxm,maxn);
+kc2mnl = repmat(kc2, [ 1 1 nl ]);
 
 % waveguide layers/sections wavenumbers 
-kz=sqrt(k2-kc2);
+kz = sqrt(k2mnl - kc2mnl);
 
 % Non-propagating wavenumbers for the loss-free case
-kz2=sqrt(-k2+kc2)./j;
-kz(find(real(k2)<kc2))=kz2(find(real(k2)<kc2));
+kznp = sqrt(-k2mnl+kc2mnl)./j;
+kz(find(real(k2mnl)<kc2mnl)) = kznp(find(real(k2mnl)<kc2mnl));
 
 % waveguide layers/sections propagation constants
-gamma=j*kz;
+gamma = j*kz;
 
 % clean up memory
-clear k2 kc2 kz kz2
+clear k2mnl kc2mnl kz kznp wm wn
 
 % Characteristic admittances of the TE modes
 Y0e=gamma./(j*freq*repmat(shiftdim(wmu(:), -2), maxm, maxn));
@@ -63,6 +63,10 @@ Y0m=(j*freq*repmat(shiftdim(weps(:), -2), maxm, maxn))./gamma;
 
 % normalization coefficients for te and tm waveguide modes
 [ Ne, Nm ] = wnorm(a, b, maxm, maxn);
+
+% They are only used squared
+Ne2 = Ne.*Ne;
+Nm2 = Nm.*Nm;
 
 % layers/tlines endpoints coordinates
 z=cumsum(h); 
@@ -76,7 +80,7 @@ tle=calc_tlines(ztlc, reshape(1./Y0e, [], nl), ktlc, wg.Gls0, wg.Ggr0);
 tlm=calc_tlines(ztlc, reshape(1./Y0m, [], nl), ktlc, wg.Gls0, wg.Ggr0);
 
 % clean up memory
-clear Y0e ztlc ktlc
+clear Y0e Y0m gamma ztlc ktlc Ne Nm
 
 % mesh cell sizes
 dx=wg.a/wg.nx;
@@ -149,7 +153,7 @@ for mli = 1:length(mesh.layers)
 	Zm = reshape(calc_vi(tlm, z(mpos), mpos, z(npos), npos), maxm, maxn);
 
 	% x-directed testing, x-directed source
-	Gxx=Gdx_tri.*Gdx_tri.*Gdy_flat.*Gdy_flat.*(-Ne.*Ne.*ky.*ky.*Ze-Nm.*Nm.*kx.*kx.*Zm);
+	Gxx=Gdx_tri.*Gdx_tri.*Gdy_flat.*Gdy_flat.*(-Ne2.*ky.*ky.*Ze-Nm2.*kx.*kx.*Zm);
 
 	[ cc, ss ] = myfft(Gxx);
 
@@ -172,7 +176,7 @@ for mli = 1:length(mesh.layers)
 	Zxx = (cc(idif_jdif) - cc(idif_jsum) + cc(isum_jdif) - cc(isum_jsum)) ./ 4;
 
 	% y-directed testing, x-directed source
-	Gyx=Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_tri.*(Ne.*ky.*Ne.*kx.*Ze-Nm.*kx.*Nm.*ky.*Zm);
+	Gyx=Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_tri.*(Ne2.*ky.*kx.*Ze-Nm2.*kx.*ky.*Zm);
 
 	[ cc, ss ] = myfft(Gyx);
 
@@ -199,8 +203,8 @@ for mli = 1:length(mesh.layers)
 
 	% z-directed (via) testing, x-directed source
 	iii = reshape(calc_iii(tlm, mpos, z(npos), npos), maxm, maxn);
-	m = kc.*kc./(j*freq*weps(mpos));
-	Gvx = Nm.*kx.*Gdx_tri.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*iii;
+	m = kc2./(j*freq*weps(mpos));
+	Gvx = Nm2.*kx.*Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_flat.*m.*iii;
 
 	[ cc, ss, cs, sc ] = myfft(Gvx);
 
@@ -229,7 +233,7 @@ for mli = 1:length(mesh.layers)
 	Zvx = viac * (sc(isum_jdif) - sc(isum_jsum) + sc(idif_jdif) - sc(idif_jsum)) ./ 4;
 
 	% x-directed testing, y-directed source
-	Gxy=Gdx_flat.*Gdy_tri.*Gdx_tri.*Gdy_flat.*(Ne.*kx.*Ne.*ky.*Ze-Nm.*ky.*Nm.*kx.*Zm);
+	Gxy=Gdx_flat.*Gdy_tri.*Gdx_tri.*Gdy_flat.*(Ne2.*kx.*ky.*Ze-Nm2.*ky.*kx.*Zm);
 
 	[ cc, ss ] = myfft(Gxy);
 
@@ -255,7 +259,7 @@ for mli = 1:length(mesh.layers)
 	Zxy = (-ss(idif_jsum) - ss(idif_jdif) + ss(isum_jsum) + ss(isum_jdif)) ./ 4;
 
 	% y-directed testing, y-directed source
-	Gyy=Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_tri.*(-Ne.*kx.*Ne.*kx.*Ze-Nm.*ky.*Nm.*ky.*Zm);
+	Gyy=Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_tri.*(-Ne2.*kx.*kx.*Ze-Nm2.*ky.*ky.*Zm);
 
 	[ cc, ss ] = myfft(Gyy);
 
@@ -279,8 +283,8 @@ for mli = 1:length(mesh.layers)
 
 	% z-directed (via) testing, y-directed source
 	iii = reshape(calc_iii(tlm, mpos, z(npos), npos), maxm, maxn);
-	m = kc.*kc./(j*freq*weps(mpos));
-	Gvy = Nm.*ky.*Nm.*Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_flat.*m.*iii;
+	m = kc2./(j*freq*weps(mpos));
+	Gvy = Nm2.*ky.*Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_flat.*m.*iii;
 
 	[ cc, ss, cs, sc ] = myfft(Gvy);
 
@@ -310,8 +314,8 @@ for mli = 1:length(mesh.layers)
 
 	% x-directed testing, z-directed (via) source
 	vvd = reshape(calc_vvd(tlm, z(mpos), mpos, npos), maxm, maxn);
-	m = kc.*kc./(j*freq*weps(npos));
-	Gxv = -Nm.*Gdx_flat.*Gdy_flat.*Nm.*kx.*Gdx_tri.*Gdy_flat.*m.*vvd;
+	m = kc2./(j*freq*weps(npos));
+	Gxv = -Nm2.*Gdx_flat.*Gdy_flat.*kx.*Gdx_tri.*Gdy_flat.*m.*vvd;
 
 	[ cc, ss, cs, sc ] = myfft(Gxv);
 
@@ -338,9 +342,9 @@ for mli = 1:length(mesh.layers)
 	Zxv = viac * (sc(isum_jdif) - sc(isum_jsum) - sc(idif_jdif) + sc(idif_jsum)) ./ 4;
 
 	% y-directed testing, z-directed (via) source
-	m = kc.*kc./(j*freq*weps(npos));
+	m = kc2./(j*freq*weps(npos));
 	vvd = reshape(calc_vvd(tlm, z(mpos), mpos, npos), maxm, maxn);
-	Gyv = -Nm.*ky.*Gdx_flat.*Gdy_tri.*Nm.*Gdx_flat.*Gdy_flat.*m.*vvd;
+	Gyv = -Nm2.*ky.*Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_flat.*m.*vvd;
 
 	[ cc, ss, cs, sc ] = myfft(Gyv);
 
@@ -367,16 +371,16 @@ for mli = 1:length(mesh.layers)
 	Zyv = viac * (cs(idif_jsum) - cs(idif_jdif) - cs(isum_jsum) + cs(isum_jdif)) ./ 4;
 
 	% z-directed testing, z-directed (via) source
-	m = -kc.^4/(freq*weps(npos)*freq*weps(mpos));
+	m = -kc2.*kc2/(freq*weps(npos)*freq*weps(mpos));
 	iivd = calc_iivd(tlm, mpos, npos);
 	r = reshape(iivd, maxm, maxn);
 
-	Gvv = Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m.*r;
+	Gvv = Nm2.*Gdx_flat.*Gdy_flat.*Gdx_flat.*Gdy_flat.*m.*r;
 
         % see calczmn.m for details on via self-reaction calculations
 	if mpos == npos
-	    m = -h(npos)*kc.^2/(j*freq*weps(npos));
-	    Gvv = Gvv + Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m;
+	    m = -h(npos)*kc2/(j*freq*weps(npos));
+	    Gvv = Gvv + Nm2.*Gdx_flat.*Gdy_flat.*Gdx_flat.*Gdy_flat.*m;
 	end
 
 	[ cc, ss, cs, sc ] = myfft(Gvv);
@@ -402,20 +406,6 @@ for mli = 1:length(mesh.layers)
 	isum_jsum = sub2ind(size(cc), isum, jsum);
 
 	Zvv = viac2 * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
-
-        %% % see calczmn.m for details on via self-reaction calculations
-	%% if mpos == npos && numel(Zvv)
-
-	%%     m = -h(npos)*kc.^2/(j*freq*weps(npos));
-	%%     Gss = -Nm.*Gdx_flat.*Gdy_flat.*Nm.*Gdx_flat.*Gdy_flat.*m;
-
-	%%     [ cc, ss, cs, sc ] = myfft(Gss);
-
-        %%     % We can reuse all the indices here
-        %%     Zss = viac2 * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
-
-        %%     Zvv = Zvv - Zss;
-	%% end
 	
 	% compose the entire matrix block for this pair of layers
 	Zl = [ Zxx Zxy Zxv ; Zyx Zyy Zyv ; Zvx Zvy Zvv ];
