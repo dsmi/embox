@@ -153,259 +153,334 @@ for mli = 1:length(mesh.layers)
 	Zm = reshape(calc_vi(tlm, z(mpos), mpos, z(npos), npos), maxm, maxn);
 
 	% x-directed testing, x-directed source
-	Gxx=Gdx_tri.*Gdx_tri.*Gdy_flat.*Gdy_flat.*(-Ne2.*ky.*ky.*Ze-Nm2.*kx.*kx.*Zm);
+        if numel(mlay.xi) && numel(nlay.xi)
 
-	[ cc, ss ] = myfft(Gxx);
+	    Gxx=Gdx_tri.*Gdx_tri.*Gdy_flat.*Gdy_flat.*(-Ne2.*ky.*ky.*Ze-Nm2.*kx.*kx.*Zm);
 
-	[ mxi, nxi ] = ndgrid(mlay.xi, nlay.xi);
-	[ mxj, nxj ] = ndgrid(mlay.xj, nlay.xj);
+	    [ cc, ss ] = myfft(Gxx);
 
-	idif = wrapidx((mxi-nxi)*wg.cnx/2+1, size(Gxx, 1));   % xt-xs
-	isum = wrapidx((mxi+nxi)*wg.cnx/2+1, size(Gxx, 1));   % xt+xs
-	jdif = wrapidx((mxj-nxj)*wg.cny/2+1, size(Gxx, 2));   % yt-ys
-	jsum = wrapidx((mxj+nxj+1)*wg.cny/2+1, size(Gxx, 2)); % yt+ys
-	% notice one is added to mxj+nxj when computing jsum - y-center of
-	% the x-directed basis is found as j*dy+dy/2, (j is the mesh index)
-	% the two halves added together give one
+	    [ mxi, nxi ] = ndgrid(mlay.xi, nlay.xi);
+	    [ mxj, nxj ] = ndgrid(mlay.xj, nlay.xj);
 
-	idif_jdif = sub2ind(size(cc), idif, jdif);
-	idif_jsum = sub2ind(size(cc), idif, jsum);
-	isum_jdif = sub2ind(size(cc), isum, jdif);
-	isum_jsum = sub2ind(size(cc), isum, jsum);
+	    idif = wrapidx((mxi-nxi)*wg.cnx/2+1, size(Gxx, 1));   % xt-xs
+	    isum = wrapidx((mxi+nxi)*wg.cnx/2+1, size(Gxx, 1));   % xt+xs
+	    jdif = wrapidx((mxj-nxj)*wg.cny/2+1, size(Gxx, 2));   % yt-ys
+	    jsum = wrapidx((mxj+nxj+1)*wg.cny/2+1, size(Gxx, 2)); % yt+ys
+	    % notice one is added to mxj+nxj when computing jsum - y-center of
+	    % the x-directed basis is found as j*dy+dy/2, (j is the mesh index)
+	    % the two halves added together give one
 
-	Zxx = (cc(idif_jdif) - cc(idif_jsum) + cc(isum_jdif) - cc(isum_jsum)) ./ 4;
+	    idif_jdif = sub2ind(size(cc), idif, jdif);
+	    idif_jsum = sub2ind(size(cc), idif, jsum);
+	    isum_jdif = sub2ind(size(cc), isum, jdif);
+	    isum_jsum = sub2ind(size(cc), isum, jsum);
+
+	    Zxx = (cc(idif_jdif) - cc(idif_jsum) + cc(isum_jdif) - cc(isum_jsum)) ./ 4;
+
+        else
+
+	    Zxx = zeros(numel(mlay.xi), numel(nlay.xi));
+
+        end
 
 	% y-directed testing, x-directed source
-	Gyx=Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_tri.*(Ne2.*ky.*kx.*Ze-Nm2.*kx.*ky.*Zm);
+        if numel(mlay.yi) && numel(nlay.xi)
 
-	[ cc, ss ] = myfft(Gyx);
+	    Gyx=Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_tri.*(Ne2.*ky.*kx.*Ze-Nm2.*kx.*ky.*Zm);
 
-	[ myi, nxi ] = ndgrid(mlay.yi, nlay.xi);
-	[ myj, nxj ] = ndgrid(mlay.yj, nlay.xj);
+	    [ cc, ss ] = myfft(Gyx);
 
-	% y-position of x-directed bases (and x-position of y-directed) is the
-	% bottom/left edge (one with minimal x/y) - that is the reason for adding
-	% or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to half-cell)
-	% Here for Zyx:
-	%  xt=myi*dx+dx/2 (y-directed testing)
-	%  ys=nxj*dy+dy/2 (x-directed source)
-	idif = wrapidx((myi-nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt-xs
-	isum = wrapidx((myi+nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt+xs
-	jdif = wrapidx((myj-nxj)*wg.cny/2 - wg.cny/4 + 1, size(Gyx, 2)); % yt-ys
-	jsum = wrapidx((myj+nxj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt+ys
+	    [ myi, nxi ] = ndgrid(mlay.yi, nlay.xi);
+	    [ myj, nxj ] = ndgrid(mlay.yj, nlay.xj);
 
-	idif_jdif = sub2ind(size(ss), idif, jdif);
-	idif_jsum = sub2ind(size(ss), idif, jsum);
-	isum_jdif = sub2ind(size(ss), isum, jdif);
-	isum_jsum = sub2ind(size(ss), isum, jsum);
+	    % y-position of x-directed bases (and x-position of y-directed) is the
+	    % bottom/left edge (one with minimal x/y) - that is the reason for adding
+	    % or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to half-cell)
+	    % Here for Zyx:
+	    %  xt=myi*dx+dx/2 (y-directed testing)
+	    %  ys=nxj*dy+dy/2 (x-directed source)
+	    idif = wrapidx((myi-nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt-xs
+	    isum = wrapidx((myi+nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt+xs
+	    jdif = wrapidx((myj-nxj)*wg.cny/2 - wg.cny/4 + 1, size(Gyx, 2)); % yt-ys
+	    jsum = wrapidx((myj+nxj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt+ys
 
-	Zyx = (ss(isum_jsum) - ss(isum_jdif) + ss(idif_jsum) - ss(idif_jdif)) ./ 4;
+	    idif_jdif = sub2ind(size(ss), idif, jdif);
+	    idif_jsum = sub2ind(size(ss), idif, jsum);
+	    isum_jdif = sub2ind(size(ss), isum, jdif);
+	    isum_jsum = sub2ind(size(ss), isum, jsum);
+
+	    Zyx = (ss(isum_jsum) - ss(isum_jdif) + ss(idif_jsum) - ss(idif_jdif)) ./ 4;
+
+        else
+
+	    Zyx = zeros(numel(mlay.yi), numel(nlay.xi));
+
+        end
+
+        % Integral of current over the via from the current source of horizontal
+        % segment
+	iii = reshape(calc_iii(tlm, mpos, z(npos), npos), maxm, maxn);
 
 	% z-directed (via) testing, x-directed source
-	iii = reshape(calc_iii(tlm, mpos, z(npos), npos), maxm, maxn);
-	m = kc2./(j*freq*weps(mpos));
-	Gvx = Nm2.*kx.*Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_flat.*m.*iii;
+        if numel(mlay.vi) && numel(nlay.xi)
 
-	[ cc, ss, cs, sc ] = myfft(Gvx);
+	    m = kc2./(j*freq*weps(mpos));
+	    Gvx = Nm2.*kx.*Gdx_tri.*Gdy_flat.*Gdx_flat.*Gdy_flat.*m.*iii;
 
-	[ mvi, nxi ] = ndgrid(mlay.vi, nlay.xi);
-	[ mvj, nxj ] = ndgrid(mlay.vj, nlay.xj);
+	    [ cc, ss, cs, sc ] = myfft(Gvx);
 
-	% y-position of x-directed bases (and x-position of y-directed) is the
-	% bottom/left edge (one with minimal x/y), x- and y-positions of the
-	% via is the bottom left corner (with minimal x/y) - that is the reason
-	% for adding or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to
-	% half-cell)
-	% Here for Zvx:
-	%  xt=mvi*dx+dx/2 (z-directed (via) testing)
-	%  yt=mvj*dy+dy/2 (z-directed (via) testing)
-	%  ys=nxj*dy+dy/2 (x-directed source)
-	idif = wrapidx((mvi-nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gvx, 1)); % xt-xs
-	isum = wrapidx((mvi+nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gvx, 1)); % xt+xs
-	jdif = wrapidx((mvj-nxj)*wg.cny/2            + 1, size(Gvx, 2)); % yt-ys
-	jsum = wrapidx((mvj+nxj)*wg.cny/2 + wg.cny/2 + 1, size(Gvx, 2)); % yt+ys
+	    [ mvi, nxi ] = ndgrid(mlay.vi, nlay.xi);
+	    [ mvj, nxj ] = ndgrid(mlay.vj, nlay.xj);
 
-	idif_jdif = sub2ind(size(sc), idif, jdif);
-	idif_jsum = sub2ind(size(sc), idif, jsum);
-	isum_jdif = sub2ind(size(sc), isum, jdif);
-	isum_jsum = sub2ind(size(sc), isum, jsum);
+	    % y-position of x-directed bases (and x-position of y-directed) is the
+	    % bottom/left edge (one with minimal x/y), x- and y-positions of the
+	    % via is the bottom left corner (with minimal x/y) - that is the reason
+	    % for adding or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to
+	    % half-cell)
+	    % Here for Zvx:
+	    %  xt=mvi*dx+dx/2 (z-directed (via) testing)
+	    %  yt=mvj*dy+dy/2 (z-directed (via) testing)
+	    %  ys=nxj*dy+dy/2 (x-directed source)
+	    idif = wrapidx((mvi-nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gvx, 1)); % xt-xs
+	    isum = wrapidx((mvi+nxi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gvx, 1)); % xt+xs
+	    jdif = wrapidx((mvj-nxj)*wg.cny/2            + 1, size(Gvx, 2)); % yt-ys
+	    jsum = wrapidx((mvj+nxj)*wg.cny/2 + wg.cny/2 + 1, size(Gvx, 2)); % yt+ys
 
-	Zvx = viac * (sc(isum_jdif) - sc(isum_jsum) + sc(idif_jdif) - sc(idif_jsum)) ./ 4;
+	    idif_jdif = sub2ind(size(sc), idif, jdif);
+	    idif_jsum = sub2ind(size(sc), idif, jsum);
+	    isum_jdif = sub2ind(size(sc), isum, jdif);
+	    isum_jsum = sub2ind(size(sc), isum, jsum);
+
+	    Zvx = viac * (sc(isum_jdif) - sc(isum_jsum) + sc(idif_jdif) - sc(idif_jsum)) ./ 4;
+
+        else
+
+	    Zvx = zeros(numel(mlay.vi), numel(nlay.xi));
+
+        end
 
 	% x-directed testing, y-directed source
-	Gxy=Gdx_flat.*Gdy_tri.*Gdx_tri.*Gdy_flat.*(Ne2.*kx.*ky.*Ze-Nm2.*ky.*kx.*Zm);
+        if numel(mlay.xi) && numel(nlay.yi)
 
-	[ cc, ss ] = myfft(Gxy);
+	    Gxy=Gdx_flat.*Gdy_tri.*Gdx_tri.*Gdy_flat.*(Ne2.*kx.*ky.*Ze-Nm2.*ky.*kx.*Zm);
 
-	[ mxi, nyi ] = ndgrid(mlay.xi, nlay.yi);
-	[ mxj, nyj ] = ndgrid(mlay.xj, nlay.yj);
+	    [ cc, ss ] = myfft(Gxy);
 
-	% y-position of x-directed bases (and x-position of y-directed) is the
-	% bottom/left edge (one with minimal x/y) - that is the reason for adding
-	% or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to half-cell)
-	% Here for Zyx:
-	%  yt=mxj*dy+dy/2 (x-directed testing)
-	%  xs=nyi*dx+dx/2 (y-directed source)
-	idif = wrapidx((mxi-nyi)*wg.cnx/2 - wg.cnx/4 + 1, size(Gyx, 1)); % xt-xs
-	isum = wrapidx((mxi+nyi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt+xs
-	jdif = wrapidx((mxj-nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt-ys
-	jsum = wrapidx((mxj+nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt+ys
+	    [ mxi, nyi ] = ndgrid(mlay.xi, nlay.yi);
+	    [ mxj, nyj ] = ndgrid(mlay.xj, nlay.yj);
 
-	idif_jdif = sub2ind(size(ss), idif, jdif);
-	idif_jsum = sub2ind(size(ss), idif, jsum);
-	isum_jdif = sub2ind(size(ss), isum, jdif);
-	isum_jsum = sub2ind(size(ss), isum, jsum);
+	    % y-position of x-directed bases (and x-position of y-directed) is the
+	    % bottom/left edge (one with minimal x/y) - that is the reason for adding
+	    % or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to half-cell)
+	    % Here for Zyx:
+	    %  yt=mxj*dy+dy/2 (x-directed testing)
+	    %  xs=nyi*dx+dx/2 (y-directed source)
+	    idif = wrapidx((mxi-nyi)*wg.cnx/2 - wg.cnx/4 + 1, size(Gyx, 1)); % xt-xs
+	    isum = wrapidx((mxi+nyi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt+xs
+	    jdif = wrapidx((mxj-nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt-ys
+	    jsum = wrapidx((mxj+nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt+ys
 
-	Zxy = (-ss(idif_jsum) - ss(idif_jdif) + ss(isum_jsum) + ss(isum_jdif)) ./ 4;
+	    idif_jdif = sub2ind(size(ss), idif, jdif);
+	    idif_jsum = sub2ind(size(ss), idif, jsum);
+	    isum_jdif = sub2ind(size(ss), isum, jdif);
+	    isum_jsum = sub2ind(size(ss), isum, jsum);
+
+	    Zxy = (-ss(idif_jsum) - ss(idif_jdif) + ss(isum_jsum) + ss(isum_jdif)) ./ 4;
+
+        else
+
+	    Zxy = zeros(numel(mlay.xi), numel(nlay.yi));
+
+        end
 
 	% y-directed testing, y-directed source
-	Gyy=Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_tri.*(-Ne2.*kx.*kx.*Ze-Nm2.*ky.*ky.*Zm);
+        if numel(mlay.yi) && numel(nlay.yi)
 
-	[ cc, ss ] = myfft(Gyy);
+	    Gyy=Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_tri.*(-Ne2.*kx.*kx.*Ze-Nm2.*ky.*ky.*Zm);
 
-	[ myi, nyi ] = ndgrid(mlay.yi, nlay.yi);
-	[ myj, nyj ] = ndgrid(mlay.yj, nlay.yj);
+	    [ cc, ss ] = myfft(Gyy);
 
-	% notice one is added to myi+nyi when computing isum - x-center of
-	% the y-directed basis is found as i*dx+dx/2, (i is the mesh index)
-	% the two halves added together give one
-	idif = wrapidx((myi-nyi)*wg.cnx/2+1, size(Gyy, 1));   % xt-xs
-	isum = wrapidx((myi+nyi+1)*wg.cnx/2+1, size(Gyy, 1)); % xt+xs
-	jdif = wrapidx((myj-nyj)*wg.cny/2+1, size(Gyy, 2));   % yt-ys
-	jsum = wrapidx((myj+nyj)*wg.cny/2+1, size(Gyy, 2));   % yt+ys
+	    [ myi, nyi ] = ndgrid(mlay.yi, nlay.yi);
+	    [ myj, nyj ] = ndgrid(mlay.yj, nlay.yj);
 
-	idif_jdif = sub2ind(size(cc), idif, jdif);
-	idif_jsum = sub2ind(size(cc), idif, jsum);
-	isum_jdif = sub2ind(size(cc), isum, jdif);
-	isum_jsum = sub2ind(size(cc), isum, jsum);
+	    % notice one is added to myi+nyi when computing isum - x-center of
+	    % the y-directed basis is found as i*dx+dx/2, (i is the mesh index)
+	    % the two halves added together give one
+	    idif = wrapidx((myi-nyi)*wg.cnx/2+1, size(Gyy, 1));   % xt-xs
+	    isum = wrapidx((myi+nyi+1)*wg.cnx/2+1, size(Gyy, 1)); % xt+xs
+	    jdif = wrapidx((myj-nyj)*wg.cny/2+1, size(Gyy, 2));   % yt-ys
+	    jsum = wrapidx((myj+nyj)*wg.cny/2+1, size(Gyy, 2));   % yt+ys
 
-	Zyy = (cc(idif_jdif) + cc(idif_jsum) - cc(isum_jdif) - cc(isum_jsum)) ./ 4;
+	    idif_jdif = sub2ind(size(cc), idif, jdif);
+	    idif_jsum = sub2ind(size(cc), idif, jsum);
+	    isum_jdif = sub2ind(size(cc), isum, jdif);
+	    isum_jsum = sub2ind(size(cc), isum, jsum);
+
+	    Zyy = (cc(idif_jdif) + cc(idif_jsum) - cc(isum_jdif) - cc(isum_jsum)) ./ 4;
+
+        else
+
+	    Zyy = zeros(numel(mlay.yi), numel(nlay.yi));
+
+        end
 
 	% z-directed (via) testing, y-directed source
-	iii = reshape(calc_iii(tlm, mpos, z(npos), npos), maxm, maxn);
-	m = kc2./(j*freq*weps(mpos));
-	Gvy = Nm2.*ky.*Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_flat.*m.*iii;
+        if numel(mlay.vi) && numel(nlay.yi)
 
-	[ cc, ss, cs, sc ] = myfft(Gvy);
+	    m = kc2./(j*freq*weps(mpos));
+	    Gvy = Nm2.*ky.*Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_flat.*m.*iii;
 
-	[ mvi, nyi ] = ndgrid(mlay.vi, nlay.yi);
-	[ mvj, nyj ] = ndgrid(mlay.vj, nlay.yj);
+	    [ cc, ss, cs, sc ] = myfft(Gvy);
 
-	% y-position of x-directed bases (and x-position of y-directed) is the
-	% bottom/left edge (one with minimal x/y), x- and y-positions of the
-	% via is the bottom left corner (with minimal x/y) - that is the reason
-	% for adding or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to
-	% half-cell)
-	% Here for Zvy:
-	%  xt=mvi*dx+dx/2 (z-directed (via) testing)
-	%  yt=mvj*dy+dy/2 (z-directed (via) testing)
-	%  xs=nyi*dx+dx/2 (y-directed source)
-	idif = wrapidx((mvi-nyi)*wg.cnx/2            + 1, size(Gvy, 1)); % xt-xs
-	isum = wrapidx((mvi+nyi)*wg.cnx/2 + wg.cnx/2 + 1, size(Gvy, 1)); % xt+xs
-	jdif = wrapidx((mvj-nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gvy, 2)); % yt-ys
-	jsum = wrapidx((mvj+nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gvy, 2)); % yt+ys
+	    [ mvi, nyi ] = ndgrid(mlay.vi, nlay.yi);
+	    [ mvj, nyj ] = ndgrid(mlay.vj, nlay.yj);
 
-	idif_jdif = sub2ind(size(cs), idif, jdif);
-	idif_jsum = sub2ind(size(cs), idif, jsum);
-	isum_jdif = sub2ind(size(cs), isum, jdif);
-	isum_jsum = sub2ind(size(cs), isum, jsum);
+	    % y-position of x-directed bases (and x-position of y-directed) is the
+	    % bottom/left edge (one with minimal x/y), x- and y-positions of the
+	    % via is the bottom left corner (with minimal x/y) - that is the reason
+	    % for adding or subtracting wg.cnx/4 or wg.cny/4 (which corresponds to
+	    % half-cell)
+	    % Here for Zvy:
+	    %  xt=mvi*dx+dx/2 (z-directed (via) testing)
+	    %  yt=mvj*dy+dy/2 (z-directed (via) testing)
+	    %  xs=nyi*dx+dx/2 (y-directed source)
+	    idif = wrapidx((mvi-nyi)*wg.cnx/2            + 1, size(Gvy, 1)); % xt-xs
+	    isum = wrapidx((mvi+nyi)*wg.cnx/2 + wg.cnx/2 + 1, size(Gvy, 1)); % xt+xs
+	    jdif = wrapidx((mvj-nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gvy, 2)); % yt-ys
+	    jsum = wrapidx((mvj+nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gvy, 2)); % yt+ys
 
-	Zvy = viac * (cs(idif_jsum) + cs(idif_jdif) - cs(isum_jsum) - cs(isum_jdif)) ./ 4;
+	    idif_jdif = sub2ind(size(cs), idif, jdif);
+	    idif_jsum = sub2ind(size(cs), idif, jsum);
+	    isum_jdif = sub2ind(size(cs), isum, jdif);
+	    isum_jsum = sub2ind(size(cs), isum, jsum);
+
+	    Zvy = viac * (cs(idif_jsum) + cs(idif_jdif) - cs(isum_jsum) - cs(isum_jdif)) ./ 4;
+
+        else
+
+	    Zvy = zeros(numel(mlay.vi), numel(nlay.yi));
+
+        end
+
+        % Voltage at observation z due to equivalent voltage source of the via
+	vvd = reshape(calc_vvd(tlm, z(mpos), mpos, npos), maxm, maxn);
 
 	% x-directed testing, z-directed (via) source
-	vvd = reshape(calc_vvd(tlm, z(mpos), mpos, npos), maxm, maxn);
-	m = kc2./(j*freq*weps(npos));
-	Gxv = -Nm2.*Gdx_flat.*Gdy_flat.*kx.*Gdx_tri.*Gdy_flat.*m.*vvd;
+        if numel(mlay.xi) && numel(nlay.vi)
 
-	[ cc, ss, cs, sc ] = myfft(Gxv);
+	    m = kc2./(j*freq*weps(npos));
+	    Gxv = -Nm2.*Gdx_flat.*Gdy_flat.*kx.*Gdx_tri.*Gdy_flat.*m.*vvd;
 
-	[ mxi, nvi ] = ndgrid(mlay.xi, nlay.vi);
-	[ mxj, nvj ] = ndgrid(mlay.xj, nlay.vj);
+	    [ cc, ss, cs, sc ] = myfft(Gxv);
 
-	% See comments above (Zvy for example) for details about the indices
-	% evaluation. Briefly, wg.cnx/4 and wg.cny/4 corresponds to half-cell.
-	% Soource and observation centerpoint coordinates for Zxv:
-	%  xt=mvi*dx      (x-directed testing)
-	%  yt=mvj*dy+dy/2 (x-directed testing)
-	%  xs=nvi*dx+dx/2 (z-directed (via) source)
-	%  ys=nvj*dy+dy/2 (z-directed (via) source)
-	idif = wrapidx((mxi-nvi)*wg.cnx/2 - wg.cnx/4 + 1, size(Gxv, 1)); % xt-xs
-	isum = wrapidx((mxi+nvi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gxv, 1)); % xt+xs
-	jdif = wrapidx((mxj-nvj)*wg.cny/2            + 1, size(Gxv, 2)); % yt-ys
-	jsum = wrapidx((mxj+nvj)*wg.cny/2 + wg.cny/2 + 1, size(Gxv, 2)); % yt+ys
+	    [ mxi, nvi ] = ndgrid(mlay.xi, nlay.vi);
+	    [ mxj, nvj ] = ndgrid(mlay.xj, nlay.vj);
 
-	idif_jdif = sub2ind(size(sc), idif, jdif);
-	idif_jsum = sub2ind(size(sc), idif, jsum);
-	isum_jdif = sub2ind(size(sc), isum, jdif);
-	isum_jsum = sub2ind(size(sc), isum, jsum);
+	    % See comments above (Zvy for example) for details about the indices
+	    % evaluation. Briefly, wg.cnx/4 and wg.cny/4 corresponds to half-cell.
+	    % Soource and observation centerpoint coordinates for Zxv:
+	    %  xt=mvi*dx      (x-directed testing)
+	    %  yt=mvj*dy+dy/2 (x-directed testing)
+	    %  xs=nvi*dx+dx/2 (z-directed (via) source)
+	    %  ys=nvj*dy+dy/2 (z-directed (via) source)
+	    idif = wrapidx((mxi-nvi)*wg.cnx/2 - wg.cnx/4 + 1, size(Gxv, 1)); % xt-xs
+	    isum = wrapidx((mxi+nvi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gxv, 1)); % xt+xs
+	    jdif = wrapidx((mxj-nvj)*wg.cny/2            + 1, size(Gxv, 2)); % yt-ys
+	    jsum = wrapidx((mxj+nvj)*wg.cny/2 + wg.cny/2 + 1, size(Gxv, 2)); % yt+ys
 
-	Zxv = viac * (sc(isum_jdif) - sc(isum_jsum) - sc(idif_jdif) + sc(idif_jsum)) ./ 4;
+	    idif_jdif = sub2ind(size(sc), idif, jdif);
+	    idif_jsum = sub2ind(size(sc), idif, jsum);
+	    isum_jdif = sub2ind(size(sc), isum, jdif);
+	    isum_jsum = sub2ind(size(sc), isum, jsum);
+
+	    Zxv = viac * (sc(isum_jdif) - sc(isum_jsum) - sc(idif_jdif) + sc(idif_jsum)) ./ 4;
+
+        else
+
+	    Zxv = zeros(numel(mlay.xi), numel(nlay.vi));
+
+        end
 
 	% y-directed testing, z-directed (via) source
-	m = kc2./(j*freq*weps(npos));
-	vvd = reshape(calc_vvd(tlm, z(mpos), mpos, npos), maxm, maxn);
-	Gyv = -Nm2.*ky.*Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_flat.*m.*vvd;
+        if numel(mlay.yi) && numel(nlay.vi)
 
-	[ cc, ss, cs, sc ] = myfft(Gyv);
+	    m = kc2./(j*freq*weps(npos));
+	    Gyv = -Nm2.*ky.*Gdx_flat.*Gdy_tri.*Gdx_flat.*Gdy_flat.*m.*vvd;
 
-	[ myi, nvi ] = ndgrid(mlay.yi, nlay.vi);
-	[ myj, nvj ] = ndgrid(mlay.yj, nlay.vj);
+	    [ cc, ss, cs, sc ] = myfft(Gyv);
 
-	% See comments above (Zvy for example) for details about the indices
-	% evaluation. Briefly, wg.cnx/4 and wg.cny/4 correspond to half-cell.
-	% Soource and observation centerpoint coordinates for Zyv:
-	%  xt=mvi*dx+dy/2 (y-directed testing)
-	%  yt=mvj*dy      (y-directed testing)
-	%  xs=nvi*dx+dx/2 (z-directed (via) source)
-	%  ys=nvj*dy+dy/2 (z-directed (via) source)
-	idif = wrapidx((myi-nvi)*wg.cnx/2            + 1, size(Gyv, 1)); % xt-xs
-	isum = wrapidx((myi+nvi)*wg.cnx/2 + wg.cnx/2 + 1, size(Gyv, 1)); % xt+xs
-	jdif = wrapidx((myj-nvj)*wg.cny/2 - wg.cny/4 + 1, size(Gyv, 2)); % yt-ys
-	jsum = wrapidx((myj+nvj)*wg.cny/2 + wg.cny/4 + 1, size(Gyv, 2)); % yt+ys
+	    [ myi, nvi ] = ndgrid(mlay.yi, nlay.vi);
+	    [ myj, nvj ] = ndgrid(mlay.yj, nlay.vj);
 
-	idif_jdif = sub2ind(size(cs), idif, jdif);
-	idif_jsum = sub2ind(size(cs), idif, jsum);
-	isum_jdif = sub2ind(size(cs), isum, jdif);
-	isum_jsum = sub2ind(size(cs), isum, jsum);
+	    % See comments above (Zvy for example) for details about the indices
+	    % evaluation. Briefly, wg.cnx/4 and wg.cny/4 correspond to half-cell.
+	    % Soource and observation centerpoint coordinates for Zyv:
+	    %  xt=mvi*dx+dy/2 (y-directed testing)
+	    %  yt=mvj*dy      (y-directed testing)
+	    %  xs=nvi*dx+dx/2 (z-directed (via) source)
+	    %  ys=nvj*dy+dy/2 (z-directed (via) source)
+	    idif = wrapidx((myi-nvi)*wg.cnx/2            + 1, size(Gyv, 1)); % xt-xs
+	    isum = wrapidx((myi+nvi)*wg.cnx/2 + wg.cnx/2 + 1, size(Gyv, 1)); % xt+xs
+	    jdif = wrapidx((myj-nvj)*wg.cny/2 - wg.cny/4 + 1, size(Gyv, 2)); % yt-ys
+	    jsum = wrapidx((myj+nvj)*wg.cny/2 + wg.cny/4 + 1, size(Gyv, 2)); % yt+ys
 
-	Zyv = viac * (cs(idif_jsum) - cs(idif_jdif) - cs(isum_jsum) + cs(isum_jdif)) ./ 4;
+	    idif_jdif = sub2ind(size(cs), idif, jdif);
+	    idif_jsum = sub2ind(size(cs), idif, jsum);
+	    isum_jdif = sub2ind(size(cs), isum, jdif);
+	    isum_jsum = sub2ind(size(cs), isum, jsum);
+
+	    Zyv = viac * (cs(idif_jsum) - cs(idif_jdif) - cs(isum_jsum) + cs(isum_jdif)) ./ 4;
+
+        else
+
+	    Zyv = zeros(numel(mlay.yi), numel(nlay.vi));
+
+        end
 
 	% z-directed testing, z-directed (via) source
-	m = -kc2.*kc2/(freq*weps(npos)*freq*weps(mpos));
-	iivd = calc_iivd(tlm, mpos, npos);
-	r = reshape(iivd, maxm, maxn);
+        if numel(mlay.vi) && numel(nlay.vi)
 
-	Gvv = Nm2.*Gdx_flat.*Gdy_flat.*Gdx_flat.*Gdy_flat.*m.*r;
+	    m = -kc2.*kc2/(freq*weps(npos)*freq*weps(mpos));
+	    iivd = calc_iivd(tlm, mpos, npos);
+	    r = reshape(iivd, maxm, maxn);
 
-        % see calczmn.m for details on via self-reaction calculations
-	if mpos == npos
-	    m = -h(npos)*kc2/(j*freq*weps(npos));
-	    Gvv = Gvv + Nm2.*Gdx_flat.*Gdy_flat.*Gdx_flat.*Gdy_flat.*m;
-	end
+	    Gvv = Nm2.*Gdx_flat.*Gdy_flat.*Gdx_flat.*Gdy_flat.*m.*r;
 
-	[ cc, ss, cs, sc ] = myfft(Gvv);
+            % see calczmn.m for details on via self-reaction calculations
+	    if mpos == npos
+	        m = -h(npos)*kc2/(j*freq*weps(npos));
+	        Gvv = Gvv + Nm2.*Gdx_flat.*Gdy_flat.*Gdx_flat.*Gdy_flat.*m;
+	    end
 
-	[ mvi, nvi ] = ndgrid(mlay.vi, nlay.vi);
-	[ mvj, nvj ] = ndgrid(mlay.vj, nlay.vj);
+	    [ cc, ss, cs, sc ] = myfft(Gvv);
 
-	% See comments above (Zvy for example) for details about the indices
-	% evaluation. Briefly, wg.cnx/4 and wg.cny/4 correspond to half-cell.
-	% Soource and observation centerpoint coordinates for Zvv:
-	%  xt=mvi*dx+dy/2 (z-directed (via) testing)
-	%  yt=mvj*dy+dy/2 (z-directed (via) testing)
-	%  xs=nvi*dx+dx/2 (z-directed (via) source)
-	%  ys=nvj*dy+dy/2 (z-directed (via) source)
-	idif = wrapidx((mvi-nvi)*wg.cnx/2            + 1, size(Gvv, 1)); % xt-xs
-	isum = wrapidx((mvi+nvi)*wg.cnx/2 + wg.cnx/2 + 1, size(Gvv, 1)); % xt+xs
-	jdif = wrapidx((mvj-nvj)*wg.cny/2            + 1, size(Gvv, 2)); % yt-ys
-	jsum = wrapidx((mvj+nvj)*wg.cny/2 + wg.cny/2 + 1, size(Gvv, 2)); % yt+ys
+	    [ mvi, nvi ] = ndgrid(mlay.vi, nlay.vi);
+	    [ mvj, nvj ] = ndgrid(mlay.vj, nlay.vj);
 
-	idif_jdif = sub2ind(size(cc), idif, jdif);
-	idif_jsum = sub2ind(size(cc), idif, jsum);
-	isum_jdif = sub2ind(size(cc), isum, jdif);
-	isum_jsum = sub2ind(size(cc), isum, jsum);
+	    % See comments above (Zvy for example) for details about the indices
+	    % evaluation. Briefly, wg.cnx/4 and wg.cny/4 correspond to half-cell.
+	    % Soource and observation centerpoint coordinates for Zvv:
+	    %  xt=mvi*dx+dy/2 (z-directed (via) testing)
+	    %  yt=mvj*dy+dy/2 (z-directed (via) testing)
+	    %  xs=nvi*dx+dx/2 (z-directed (via) source)
+	    %  ys=nvj*dy+dy/2 (z-directed (via) source)
+	    idif = wrapidx((mvi-nvi)*wg.cnx/2            + 1, size(Gvv, 1)); % xt-xs
+	    isum = wrapidx((mvi+nvi)*wg.cnx/2 + wg.cnx/2 + 1, size(Gvv, 1)); % xt+xs
+	    jdif = wrapidx((mvj-nvj)*wg.cny/2            + 1, size(Gvv, 2)); % yt-ys
+	    jsum = wrapidx((mvj+nvj)*wg.cny/2 + wg.cny/2 + 1, size(Gvv, 2)); % yt+ys
 
-	Zvv = viac2 * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
+	    idif_jdif = sub2ind(size(cc), idif, jdif);
+	    idif_jsum = sub2ind(size(cc), idif, jsum);
+	    isum_jdif = sub2ind(size(cc), isum, jdif);
+	    isum_jsum = sub2ind(size(cc), isum, jsum);
+
+	    Zvv = viac2 * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
+
+        else
+
+	    Zvv = zeros(numel(mlay.vi), numel(nlay.vi));
+
+        end
 	
 	% compose the entire matrix block for this pair of layers
 	Zl = [ Zxx Zxy Zxv ; Zyx Zyy Zyv ; Zvx Zvy Zvv ];
