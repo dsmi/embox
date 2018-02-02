@@ -59,6 +59,9 @@ for lidx = 1:length(mesh.layers)
     fo = (myj == nyj).*(1/3 + 1/3*((myj > 0) & (myj < wg.ny))); % full overlap
     Zyy = acell*(myi==nyi).*(ho+fo);
 
+    % clean up memory
+    clear mxi nxi mxj nxj myi nyi myj nyj ho fo
+
     % compose the entire matrix block for this pair of layers
     Zxy = zeros(size(Zxx,1), size(Zyy,2));
     Zyx = zeros(size(Zyy,1), size(Zxx,2));
@@ -79,7 +82,13 @@ for lidx = 1:length(mesh.layers)
 	Zs = 0; % perfect conductor otherwise
     end
 
+    % Finally scale it with this layer's surfece impedance
+    Zls = Zs*Zl;
+
+    % clean up memory
+    clear Zl Zxx Zxy Zxv Zyx Zyy Zyv Zvx Zvy Zvv
+
     % And, finally, put this block into the overall matrix
-    Z(cumbf(lidx)+1:cumbf(lidx+1), cumbf(lidx)+1:cumbf(lidx+1)) = Zs*Zl;
+    Z(cumbf(lidx)+1:cumbf(lidx+1), cumbf(lidx)+1:cumbf(lidx+1)) = Zls;
 
 end

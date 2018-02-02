@@ -177,6 +177,10 @@ for mli = 1:length(mesh.layers)
 
 	    Zxx = (cc(idif_jdif) - cc(idif_jsum) + cc(isum_jdif) - cc(isum_jsum)) ./ 4;
 
+	    % clean up memory
+	    clear Gxx cc ss mxi nxi mxj nxj
+	    clear idif isum jdif jsum idif_jdif idif_jsum isum_jdif isum_jsum
+
         else
 
 	    Zxx = zeros(numel(mlay.xi), numel(nlay.xi));
@@ -210,6 +214,10 @@ for mli = 1:length(mesh.layers)
 	    isum_jsum = sub2ind(size(ss), isum, jsum);
 
 	    Zyx = (ss(isum_jsum) - ss(isum_jdif) + ss(idif_jsum) - ss(idif_jdif)) ./ 4;
+
+	    % clean up memory
+	    clear Gyx cc ss myi nxi myj nxj
+	    clear idif isum jdif jsum idif_jdif idif_jsum isum_jdif isum_jsum
 
         else
 
@@ -253,6 +261,10 @@ for mli = 1:length(mesh.layers)
 
 	    Zvx = viac * (sc(isum_jdif) - sc(isum_jsum) + sc(idif_jdif) - sc(idif_jsum)) ./ 4;
 
+	    % clean up memory
+	    clear Gvx cc ss cs sc mvi nxi mvj nxj
+	    clear idif isum jdif jsum idif_jdif idif_jsum isum_jdif isum_jsum
+
         else
 
 	    Zvx = zeros(numel(mlay.vi), numel(nlay.xi));
@@ -275,10 +287,10 @@ for mli = 1:length(mesh.layers)
 	    % Here for Zyx:
 	    %  yt=mxj*dy+dy/2 (x-directed testing)
 	    %  xs=nyi*dx+dx/2 (y-directed source)
-	    idif = wrapidx((mxi-nyi)*wg.cnx/2 - wg.cnx/4 + 1, size(Gyx, 1)); % xt-xs
-	    isum = wrapidx((mxi+nyi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gyx, 1)); % xt+xs
-	    jdif = wrapidx((mxj-nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt-ys
-	    jsum = wrapidx((mxj+nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gyx, 2)); % yt+ys
+	    idif = wrapidx((mxi-nyi)*wg.cnx/2 - wg.cnx/4 + 1, size(Gxy, 1)); % xt-xs
+	    isum = wrapidx((mxi+nyi)*wg.cnx/2 + wg.cnx/4 + 1, size(Gxy, 1)); % xt+xs
+	    jdif = wrapidx((mxj-nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gxy, 2)); % yt-ys
+	    jsum = wrapidx((mxj+nyj)*wg.cny/2 + wg.cny/4 + 1, size(Gxy, 2)); % yt+ys
 
 	    idif_jdif = sub2ind(size(ss), idif, jdif);
 	    idif_jsum = sub2ind(size(ss), idif, jsum);
@@ -286,6 +298,10 @@ for mli = 1:length(mesh.layers)
 	    isum_jsum = sub2ind(size(ss), isum, jsum);
 
 	    Zxy = (-ss(idif_jsum) - ss(idif_jdif) + ss(isum_jsum) + ss(isum_jdif)) ./ 4;
+
+	    % clean up memory
+	    clear Gxy cc ss mxi nyi mxj nyj
+	    clear idif isum jdif jsum idif_jdif idif_jsum isum_jdif isum_jsum
 
         else
 
@@ -317,6 +333,10 @@ for mli = 1:length(mesh.layers)
 	    isum_jsum = sub2ind(size(cc), isum, jsum);
 
 	    Zyy = (cc(idif_jdif) + cc(idif_jsum) - cc(isum_jdif) - cc(isum_jsum)) ./ 4;
+
+	    % clean up memory
+	    clear Gyy cc ss myi nyi myj nyj
+	    clear idif isum jdif jsum idif_jdif idif_jsum isum_jdif isum_jsum
 
         else
 
@@ -355,6 +375,10 @@ for mli = 1:length(mesh.layers)
 	    isum_jsum = sub2ind(size(cs), isum, jsum);
 
 	    Zvy = viac * (cs(idif_jsum) + cs(idif_jdif) - cs(isum_jsum) - cs(isum_jdif)) ./ 4;
+
+	    % clean up memory
+	    clear Gvy cc ss cs sc mvi nyi mvj nyj
+	    clear idif isum jdif jsum idif_jdif idif_jsum isum_jdif isum_jsum
 
         else
 
@@ -395,6 +419,10 @@ for mli = 1:length(mesh.layers)
 
 	    Zxv = viac * (sc(isum_jdif) - sc(isum_jsum) - sc(idif_jdif) + sc(idif_jsum)) ./ 4;
 
+	    % clean up memory
+	    clear Gxv cc ss cs sc mxi nvi mxj nvj
+	    clear idif isum jdif jsum idif_jdif idif_jsum isum_jdif isum_jsum
+
         else
 
 	    Zxv = zeros(numel(mlay.xi), numel(nlay.vi));
@@ -430,6 +458,10 @@ for mli = 1:length(mesh.layers)
 	    isum_jsum = sub2ind(size(cs), isum, jsum);
 
 	    Zyv = viac * (cs(idif_jsum) - cs(idif_jdif) - cs(isum_jsum) + cs(isum_jdif)) ./ 4;
+
+	    % clean up memory
+	    clear Gyv cc ss cs sc myi nvi myj nvj
+	    clear idif isum jdif jsum idif_jdif idif_jsum isum_jdif isum_jsum
 
         else
 
@@ -476,6 +508,10 @@ for mli = 1:length(mesh.layers)
 
 	    Zvv = viac2 * (cc(idif_jdif) - cc(idif_jsum) - cc(isum_jdif) + cc(isum_jsum)) ./ 4;
 
+	    % clean up memory
+	    clear m iivd r Gvv cc ss cs sc mvi nvi mvj nvj
+	    clear idif isum jdif jsum idif_jdif idif_jsum isum_jdif isum_jsum
+
         else
 
 	    Zvv = zeros(numel(mlay.vi), numel(nlay.vi));
@@ -484,6 +520,8 @@ for mli = 1:length(mesh.layers)
 	
 	% compose the entire matrix block for this pair of layers
 	Zl = [ Zxx Zxy Zxv ; Zyx Zyy Zyv ; Zvx Zvy Zvv ];
+
+	clear Zxx Zxy Zxv Zyx Zyy Zyv Zvx Zvy Zvv
 
 	% Identify segments which cross the waveguide boundary - the
 	% corresponding elements of the Z matrix need to be multiplied by 0.5
@@ -501,6 +539,8 @@ for mli = 1:length(mesh.layers)
 
 	% scale the impedance matrix elements for the boundary-crossing segments
 	Zl=Mm*Zl*Mn;
+
+	clear Mm Mn
 
 	% And, finally, put this block into the overall matrix
 	Z(cumbf(mli)+1:cumbf(mli+1), cumbf(nli)+1:cumbf(nli+1)) = Zl;
