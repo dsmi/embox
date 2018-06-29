@@ -2,7 +2,6 @@ function tswrite(fileName, freq, Y, t, r0)
 % tswrite(fileName, freq, Y, t, r0)
 %
 % Writes multiport network parameters in Touchstone format
-% Now only handles up to 4 ports
 %
 
 comment = 'no comment supplied';
@@ -32,16 +31,18 @@ for i = 1:nf
         end
         fprintf(f, '\n');
     else
-        % 3+ ports - matrix row per line
+        % 3+ ports - 4 entries per line
         offset = '';
         for m = 1:N
-            fprintf(f, '%s', offset);
             for n = 1:N
+                if 0 == rem( n - 1, 4 ) % first, fifth, ninth, so on
+                    fprintf(f, '%s', offset);
+                    offset = [ char(10) '               ' ]; % for second and subsequent rows
+                end
                 fprintf(f, ' %.11e %.11e', real(y(m,n)), imag(y(m,n)));
             end
-            fprintf(f, '\n');
-            offset = '               '; % for second and subsequent rows
         end
+        fprintf(f, '\n');
     end
 end
 
