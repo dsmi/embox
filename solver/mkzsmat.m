@@ -29,7 +29,7 @@ cumv = cumsum(cellfun(@(v) length(v), { mesh.layers(:).vi }));
 cumbf = [ 0 (cumx + cumy + cumv) ];
 
 % Pre-allocate it!
-Z = zeros(numbf);
+Z = sparse(numbf,numbf);
 
 % Here we start popolating the impedance matrix. The geometry consists of a
 % number of layers of metallization (vias are on their way) and the Z matrix
@@ -49,7 +49,7 @@ for lidx = 1:length(mesh.layers)
     % x-directed basis functions
     ho = (abs(mxi - nxi) == 1)*(1/6); % half overlap case
     fo = (mxi == nxi).*(1/3 + 1/3*((mxi > 0) & (mxi < wg.nx))); % full overlap
-    Zxx = acell*(mxj==nxj).*(ho+fo);
+    Zxx = acell*sparse( (mxj==nxj).*(ho+fo) );
 
     [ myi, nyi ] = ndgrid(layer.yi, layer.yi);
     [ myj, nyj ] = ndgrid(layer.yj, layer.yj);
@@ -57,19 +57,19 @@ for lidx = 1:length(mesh.layers)
     % y-directed basis functions
     ho = (abs(myj - nyj) == 1)*(1/6); % half overlap case
     fo = (myj == nyj).*(1/3 + 1/3*((myj > 0) & (myj < wg.ny))); % full overlap
-    Zyy = acell*(myi==nyi).*(ho+fo);
+    Zyy = acell*sparse( (myi==nyi).*(ho+fo) );
 
     % clean up memory
     clear mxi nxi mxj nxj myi nyi myj nyj ho fo
 
     % compose the entire matrix block for this pair of layers
-    Zxy = zeros(size(Zxx,1), size(Zyy,2));
-    Zyx = zeros(size(Zyy,1), size(Zxx,2));
-    Zxv = zeros(length(layer.xi), length(layer.vi));
-    Zyv = zeros(length(layer.yi), length(layer.vi));
-    Zvx = zeros(length(layer.vi), length(layer.xi));
-    Zvy = zeros(length(layer.vi), length(layer.yi));
-    Zvv = zeros(length(layer.vi), length(layer.vi)); % vias are ideal conductors
+    Zxy = sparse(size(Zxx,1), size(Zyy,2));
+    Zyx = sparse(size(Zyy,1), size(Zxx,2));
+    Zxv = sparse(length(layer.xi), length(layer.vi));
+    Zyv = sparse(length(layer.yi), length(layer.vi));
+    Zvx = sparse(length(layer.vi), length(layer.xi));
+    Zvy = sparse(length(layer.vi), length(layer.yi));
+    Zvv = sparse(length(layer.vi), length(layer.vi)); % vias are ideal conductors
     Zl = [ Zxx Zxy Zxv ; Zyx Zyy Zyv ; Zvx Zvy Zvv ];
 
     if isfield(layer, 'conductivity')
