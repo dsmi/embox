@@ -18,16 +18,20 @@ function [ Y I Z ]=solvey(wg, mesh, ports, portw)
 %
 
 % The impedance matrix assuming perfect conductivity
-Zpec=mkzmat(wg, mesh);
+Z = mkzmat(wg, mesh);
 
 % surface impedance
 Zs = mkzsmat(wg, mesh);
 
 % The effective impedance matrix: pec - surface impedace
-Z = Zpec - Zs;
+% The subtraction is not done directly like Z = Z - Zs
+% to avoid creating a full temporary copy of Z (Octave 4.4.1)
+[ row, col, v ] = find(Zs);
+ind = sub2ind( size(Z), row, col );
+Z(ind) = Z(ind) - v;
 
 % The linear system solution will need memory
-clear Zpec  Zs
+clear Zs
 
 % Number of the basis functions
 N=size(Z,1);
