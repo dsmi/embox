@@ -16,24 +16,11 @@ b  = tw*16; % y-size of the enclosure/waveguide
 er = 4.05;  
 
 % Mesh options
-nx = 64;   % cells along x
-ny = 64;   % cells along y
+nx = 96;   % cells along x
+ny = 96;   % cells along y
 n0 = 3;    % number of layers in the trace
 n1 = 3;    % number of layers between the trace and the plane
 n2 = 1;    % number of layers between the planes
-
-% Start meshing -- prepare bitmaps
-cx = nx/2 + 1; % center pixel/cell coordinates
-cy = ny/2 + 1; % not necessarily integer
-dx = a/nx;
-dy = a/ny;
-b0 = zeros(nx+2, ny+2);
-bb = traceedges( drawcir(b0, cx, cy, rb/dx) ); % barrel
-bp = drawcir(b0, cx, cy, rp/dx); % pad
-bt1 = drawline(bp, cx, cy, 0, cy, tw/dy); % trace1
-bt2 = drawline(bp, cx, cy, nx+2, cy, tw/dy); % trace2
-bh = 1.0 - drawcir(b0, cx, cy, rh/dx); % hole
-bs = traceedges(bh); % stitching
 
 function [ mesh h epsl ] = mklinemesh( freq, nx, ny, a, b, th, tw, d1, nl, er )
 
@@ -90,37 +77,56 @@ function [ Y I ] = simline( freq, nx, ny, a, b, th, tw, d1, nl, er )
 
 end
 
-% Start populating the via mesh
+% Start meshing -- prepare bitmaps
+cx = nx/2 + 1; % center pixel/cell coordinates
+cy = ny/2 + 1; % not necessarily integer
+dx = a/nx;
+dy = a/ny;
+b0 = zeros(nx+2, ny+2);
+bb = traceedges( drawcir(b0, cx, cy, rb/dx) ); % barrel
+bp = drawcir(b0, cx, cy, rp/dx); % pad
+bt1 = drawline(bp, cx, cy, 0, cy, tw/dy); % trace1
+bt2 = drawline(bp, cx, cy, nx+2, cy, tw/dy); % trace2
+bh = 1.0 - drawcir(b0, cx, cy, rh/dx); % hole
+bs = traceedges(bh); % stitching
+
+% Parameters of the via layers -- from bottom to top
+lh  = [  th,   d1,   d2,   d1,   th ]; % thickness
+ll  = [  n0,   n1,   n2,   n1,   n0 ]; % simulator layers
+ler = [ 1.0,   er,   er,   er,  1.0 ]; % relative dielectric permittivity
+llt = [ 0.0, 0.02, 0.02, 0.02,  0.0 ]; % loss tangent
+
+% Bitmaps for each of the layer, bottom to top
+lb{ 1 } = bt1;                         % trace 1
+le{ 1 } = traceedges( bt1 );
+lb{ 2 } = bb;                          % barrel
+le{ 2 } = traceedges( bb );
+lb{ 3 } = double( bp | bh );           % pad+plane
+le{ 3 } = traceedges( double( bp | bh ) );
+lb{ 4 } = bb;                          % barrel
+le{ 4 } = traceedges( bb );
+lb{ 5 } = bt2;                         % trace 2
+le{ 5 } = traceedges( bt2 );
+
+% Start populating the mesh
 mesh.layers = struct( [] );
 
-% Bottom trace
-btm = mkhull( bt1, traceedges( bt1 ), 1, n0 );
-mesh.layers = [ mesh.layers btm.layers ];
-
-% Middle layer pad
-mpm = mkhull( bp, traceedges( bp ), 1+n0+n1, n2 );
-mesh.layers = [ mesh.layers mpm.layers ];
-
-% Top trace
-ttm = mkhull( bt2, traceedges( bt2 ), 1 + n0 + n1*2 + n2, n0 );
-mesh.layers = [ mesh.layers, ttm.layers ];
-
-% Barrel
-brm = mkhull( bb, traceedges( bb ), 1+n0, n1*2+n2 );
-mesh.layers = [ mesh.layers , brm.layers ];
-
-% Planes
-plm = mkhull( bh, bs, 1+n0+n1, n2 );
-mesh.layers = [ mesh.layers , plm.layers ];
+h   = [ th ]; % bottom simulator layer
+wer = [ 1.0 ];
+wlt = [ 0.0 ];
+lastl = 1; % Last processed simulator layer
+for lidx = 1:length(lh)
+    numl = ll( lidx ); % number of the simulator layers
+    laymesh = mkhull( lb{ lidx }, le{ lidx }, lastl, numl );
+    lastl = lastl + numl;
+    mesh.layers = [ mesh.layers laymesh.layers ];
+    h   = [ h   repmat( lh( lidx )/numl, 1, numl ) ];
+    wer = [ wer repmat( ler( lidx ),     1, numl ) ];
+    wlt = [ wlt repmat( llt( lidx ),     1, numl ) ];
+end
 
 % Merge layers one the same positions
 mesh = mergelayers(mesh);
-
-% Thicknesses of the layers
-ht = repmat( th/n0, 1, n0 ); % trace layers
-hs = repmat( d1/n1, 1, n1 ); % trace-to-plane layers
-hp = repmat( d2/n2, 1, n2 ); % plane-to-plane layers
-h = [ th ht hs hp hs ht ];
 
 % angular frequencies
 freqs = linspace( 1e6, 2e10, 21 )*2*pi;
@@ -153,10 +159,7 @@ for freq = freqs
     Yl = abcd2y(Al);
 
     % Dielectric permeabilities of the layers
-    epsd = eps0*debye( er, 0.02, 1e9, freq/(2*pi) );
-    et = repmat( eps0, 1, n0 );        % trace layers
-    ed = repmat( epsd, 1, n1*2 + n2 ); % dielectric layers
-    weps = [ eps0 et ed et ];
+    weps = eps0*debye( wer, wlt, 1.0e9, freq/(2*pi) );
 
     % enclosure/waveguide parameters
     wg      = wgparams(freq, a, b, h, nx, ny);
@@ -173,7 +176,7 @@ for freq = freqs
     portw = { b1'*0-dy b2'*0+dy };
 
     fprintf('Running the via simulation...\n')
-    Y1 = solvey( wg, mesh, ports, portw );
+    [ Y1 I ] = solvey( wg, mesh, ports, portw );
 
     % De-embedded Y1
     invD = inv(D);
@@ -202,10 +205,10 @@ for freq = freqs
 
 end
 
-tswrite( 'via_64.y2p',      freqs/(2*pi), Yf   )
-tswrite( 'via_64_nd.y2p',   freqs/(2*pi), Yndf )
-tswrite( 'via_64_line.y2p', freqs/(2*pi), Ylf  )
-tswrite( 'via_64_via.y2p',  freqs/(2*pi), Yvf  )
+tswrite( 'via_96.y2p',      freqs/(2*pi), Yf   )
+tswrite( 'via_96_nd.y2p',   freqs/(2*pi), Yndf )
+tswrite( 'via_96_line.y2p', freqs/(2*pi), Ylf  )
+tswrite( 'via_96_via.y2p',  freqs/(2*pi), Yvf  )
 
 %% % For the drawing
 %% wg = wgparams(1e9, a, b, h, nx, ny);
