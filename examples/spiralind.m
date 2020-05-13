@@ -16,6 +16,21 @@ nseg = 15;    % number of segments
 a = w*32; % x-size of the enclosure/waveguide
 b = w*32; % y-size of the enclosure/waveguide
 
+% conductivity of the substrate -- now copper
+csub = ccopper;
+
+% conductivity of the inductor -- now copper
+cind = ccopper;
+
+% Dielectric around the inductor -- now air
+er0 = 1.0;
+lt0 = 0.0;
+
+% Dielectric between the inductor and substrate
+er1 = 4.0;
+lt1 = 0.02;
+
+
 % Mesh options
 nx = 64;    % cells along x
 ny = 64;    % cells along y
@@ -86,6 +101,8 @@ spiralmesh = mkhull( bs, traceedges( bs ), nl + nv + 2, nl );
 
 mesh.layers = [ spiralmesh.layers viamesh.layers undermesh.layers ];
 
+mesh.layers = arrayfun( @(s) setfield( s, 'conductivity', cind ), mesh.layers );
+
 mesh = mergelayers(mesh);
 
 % angular frequencies
@@ -102,11 +119,14 @@ for freq = freqs
     fprintf( 'freq = %g GHz, wlen = %g\n', freq/(2*pi)/1e9, wavelen )
 
     % 'Permittivity' of the conducting substrate. Now it is copper
-    epss = eps0 - j*ccopper/freq;
+    epss = eps0 - j*csub/freq;
 
-    % Dielectric between the substrate and the inductor. er = 4, lt = 0.02
-    epsd = eps0*debye( 4.0, 0.02, 1e9, freq/(2*pi) );
+    % Dielectric between the substrate and the inductor.
+    epsd = eps0*debye( er1, lt1, 1e9, freq/(2*pi) );
 
+    % Dielectric around the inductor.
+    epsu = eps0*debye( er0, lt0, 1e9, freq/(2*pi) );
+	 
     nlo = ones( 1, nl );
     nvo = ones( 1, nv );
 
