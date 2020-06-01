@@ -16,8 +16,8 @@ b  = tw*16; % y-size of the enclosure/waveguide
 er = 4.05;  
 
 % Mesh options
-nx = 64;   % cells along x
-ny = 64;   % cells along y
+nx = 96;   % cells along x
+ny = 96;   % cells along y
 n0 = 3;    % number of layers in the trace
 n1 = 3;    % number of layers between the trace and the plane
 n2 = 1;    % number of layers between the planes
@@ -123,7 +123,7 @@ end
 mesh = mergelayers(mesh);
 
 % angular frequencies
-freqs = linspace( 1e6, 2e10, 11 )*2*pi;
+freqs = linspace( 1e6, 2e10, 21 )*2*pi;
 
 % Simulation results
 Yf   = [];
@@ -210,10 +210,10 @@ for freq = freqs
 
 end
 
-tswrite( 'via_64.y2p',      freqs/(2*pi), Yf   )
-tswrite( 'via_64_nd.y2p',   freqs/(2*pi), Yndf )
-tswrite( 'via_64_line.y2p', freqs/(2*pi), Ylf  )
-tswrite( 'via_64_via.y2p',  freqs/(2*pi), Yvf  )
+tswrite( 'via_96.y2p',      freqs/(2*pi), Yf   )
+tswrite( 'via_96_nd.y2p',   freqs/(2*pi), Yndf )
+tswrite( 'via_96_line.y2p', freqs/(2*pi), Ylf  )
+tswrite( 'via_96_via.y2p',  freqs/(2*pi), Yvf  )
 
 %% %% % For the drawing
 %% %% wg = wgparams(1e9, a, b, h, nx, ny);
