@@ -19,4 +19,5 @@ zidx=find(abs(kx)<1e-300); % indices of the kx=0
 kx(zidx)=1e-30; % to avoid division by zero
 
 g=2./(dx*kx.*kx).*(1-cos(dx*kx));
-g(zidx)=dx; % special case kx=0 (orËC¤u±h¢
+g(zidx)=dx; % special case kx=0
+

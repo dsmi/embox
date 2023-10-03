@@ -18,4 +18,4 @@ zidx=find(abs(kx)<1e-300); % indices of the kx=0
 kx(zidx)=1e-30; % to avoid division by zero
 
 g=2./kx.*sin(dx*kx./2);
-g(zidx)=dx; % special case kx=0 (Ð(’[h›ïàÃ
+g(zidx)=dx; % special case kx=0
