@@ -1,6 +1,8 @@
 % x-directed transmission line of nonzero thickness represented by
 % by two or more metal layers, deembedded by simulating line of length L
 % and then 2L
+% Reference is solid or hatched, lnpar.he = 1 to enable the hatching.
+% Code at the very bottom which makes the current plot is commented out.
 
 addpath(genpath([ pwd, '/..' ]));
 
@@ -8,7 +10,7 @@ mil2meter = 2.54e-5;
 
 % Dimensions
 lnpar.w = 12*mil2meter;   % stripline width
-lnpar.l = lnpar.w*16      % stripline length
+lnpar.l = lnpar.w*16;     % stripline length
 lnpar.t = 1.35*mil2meter; % stripline thickness
 lnpar.d = 10*mil2meter;   % height above ground
 lnpar.ha = pi/4; % hatch angle
@@ -17,7 +19,7 @@ hp = 16/sin(lnpar.ha)     % hatch pitch in mils
 lnpar.hp = hp*mil2meter;  % hatch pitch
 hw = 3.5/sin(lnpar.ha)    % hatch width in mils
 lnpar.hw = hw*mil2meter;  % hatch width
-lnpar.he = 1;    % hatch enable
+lnpar.he = 0;    % hatch enable
 
 % Mesh options
 lnpar.nl = 6;       % number of the metal layers in the stripline mesh
@@ -30,6 +32,15 @@ lnpar.b  = lnpar.a; % y-size of the waveguide
 lnpar.l0  = lnpar.l;
 lnpar.nx0 = lnpar.nx;
 
+% frequency sweep (frequency is angular)
+nf = 31;
+minf = 1e6;
+maxf = 3e10;
+freqs = [ minf linspace(maxf/(nf-1), maxf, nf-1) ]*2*pi;
+%% freqs = 3e10*2*pi;
+
+resultsName = 'microstrip_over_solid';
+
 function [ Y I wg mesh ports portw ] = simline(freq, lnpar, hatch)
 
     % Layers stack
@@ -38,7 +49,7 @@ function [ Y I wg mesh ports portw ] = simline(freq, lnpar, hatch)
 
     % Layer of copper at the bottom is the ground - it is not an ideal conductor
     epsc = eps0 - j*ccopper/freq; % permittivity for copper
-    epsd = eps0 * debye2(1e9*2*pi, 4.3, 0.02, freq); % dielectric
+    epsd = eps0 * debye2(4.3, 0.02, 1e9*2*pi, freq); % dielectric
     eps1 = epsd*hatch + epsc*(1-hatch); % dielectrich if hatch or copper
     weps = [ eps0 eps1 epsd repmat(eps0, 1, nls) eps0 ];
 
@@ -49,7 +60,7 @@ function [ Y I wg mesh ports portw ] = simline(freq, lnpar, hatch)
     wg.weps = weps; 
     wg.Ggr0 = 0; % no top ground
     wg.Gls0 = 0; % no bottom ground (we have layer of copper)
-    wg.cnx  = 4; % to speed up things
+    wg.cnx  = 4; % to speed up things (change to 8 for accuracy)
     wg.cny  = 4;
 
     % Mesh cell size
@@ -61,10 +72,6 @@ function [ Y I wg mesh ports portw ] = simline(freq, lnpar, hatch)
 
     % Make mesh from the layers
     mesh.layers = struct( [] );
-
-    %% Solid meshed ground
-    %% B1 = ones(nx+2, ny+2);
-    %% mesh.layers(end + 1) = mklayer(B1, 0*B1, 1, ccopper);
 
     % Hatched ground
     if hatch
@@ -140,11 +147,6 @@ function writesp(fileName, freq, Y, t, r0)
   tswrite(fileName, freq/(2*pi), renorms(y2s(Y), [ 1 1 ], [ 50 50 ]), 'S', 50)
 end
 
-% angular frequencies
-%freqs = linspace(1e7, 3e10, 100)*2*pi;
-freqs = linspace(1.9095e+010, 3e10, 9)*2*pi;
-%freqs = 3e10*2*pi;
-
 % Simulation results
 Y1f = [];
 Y2f = [];
@@ -190,7 +192,6 @@ for ifr = 1:length(freqs)
     Z0s=sqrt(A12*inv(A21))
     tds=acos(A(1,1))./freq
 
-    resultsName = 'microstrip_over_hatch_192c_6l_tail';
     writesp([ resultsName, '.s2p' ], freqs, Yf);
     writesp([ resultsName, '_nd.s2p' ], freqs, Yndf);
     writesp([ resultsName, '_l1.s2p' ], freqs, Y1f);
@@ -211,44 +212,28 @@ end
 %% Yc(4,4) = Ys;
 %% [ F, V ] = solve(branches,Yc,W,K);
 
-%% % Surface z has been temp. moved to mkzmat
-%% Z = mkzmat(wg, mesh);
+%% % Surface z
+%% Z = mkzmat(wg, mesh) - mkzsmat(wg, mesh);
 
 %% % excitation voltage vector
 %% XV = zeros(size(Z,1), 1);
 %% XV(ports{1}) = V(1);
 %% XV(ports{2}) = V(2);
 
-%% %% I = (Z\XV);
-
-%% I = myLinsolve(Z, XV); %trick!!!!
+%% I = (Z\XV);
 
 %% I1 = sum(I(ports{1}))
 %% I2 = sum(I(ports{2}))
 
 %% [ Tri, X, Y, Z, C ] = mesh2tri(wg, mesh, I(:,1));
-%% trisurf(Tri, X, Y, Z, C);
-%% %trimesh(Tri, X, Y, Z);
+%% hplot = trisurf(Tri, X, Y, Z, C);
+%% % trimesh(Tri, X, Y, Z);
 %% xlim([ -(wg.a/wg.nx)  wg.a+2*(wg.a/wg.nx) ])
 %% ylim([ -(wg.b/wg.ny)  wg.b+2*(wg.b/wg.ny) ])
 %% zlim([ -(wg.b/wg.ny)  wg.b+2*(wg.b/wg.ny) ])
 
-% The improved colormap
-%% MR=[0,0; 
-%%     0.02,0.3; %this is the important extra point
-%%     0.3,1;
-%%     1,1];
-
-%% MG=[0,0;
-%%     0.3,0; 
-%%     0.7,1;
-%%     1,1];
-
-%% MB=[0,0; 
-%%     0.7,0;
-%%     1,1];
-
-%% hot2 = colormapRGBmatrices(500,MR,MG,MB);
-
-%% colormap(hot2)
-%colorbar
+%% colormap(jet)
+%% % caxis([ -7e5 7e5 ])
+%% set(hplot,'edgecolor','none')
+%% shading interp
+%% colorbar
