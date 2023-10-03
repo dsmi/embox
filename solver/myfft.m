@@ -37,19 +37,19 @@ F01=fftshift(F);
 F11=fftshift(F);
 
 if mod(size(F, 1), 2)
-    F10=flipdim(F10,1); % if M is odd
-    F11=flipdim(F11,1);
+    F10=flip(F10,1); % if M is odd
+    F11=flip(F11,1);
 else 
-    F10(2:end,:)=flipdim(F10(2:end,:),1); % if even
-    F11(2:end,:)=flipdim(F11(2:end,:),1);
+    F10(2:end,:)=flip(F10(2:end,:),1); % if even
+    F11(2:end,:)=flip(F11(2:end,:),1);
 end 
 
 if mod(size(F, 2), 2)
-    F01=flipdim(F01,2); % if N is odd
-    F11=flipdim(F11,2);
+    F01=flip(F01,2); % if N is odd
+    F11=flip(F11,2);
 else 
-    F01(:,2:end)=flipdim(F01(:,2:end),2); % if even
-    F11(:,2:end)=flipdim(F11(:,2:end),2);
+    F01(:,2:end)=flip(F01(:,2:end),2); % if even
+    F11(:,2:end)=flip(F11(:,2:end),2);
 end 
 
 F10=ifftshift(F10);
